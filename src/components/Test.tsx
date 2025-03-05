@@ -1,10 +1,9 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Check, X, ArrowLeft, ArrowRight, Clock, Calculator } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { generateMathQuestions, fetchGeminiApiKey } from '@/services/geminiService';
+import { generateMathQuestions } from '@/services/geminiService'; // Removed fetchGeminiApiKey
 import { toast } from "@/hooks/use-toast";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
@@ -24,7 +23,6 @@ const Test = () => {
   const [showCalculator, setShowCalculator] = useState(false);
   const [calculatorInput, setCalculatorInput] = useState('');
   const [calculatorResult, setCalculatorResult] = useState('');
-  const [apiKeyFetched, setApiKeyFetched] = useState(false);
 
   // Set time based on difficulty
   useEffect(() => {
@@ -78,10 +76,7 @@ const Test = () => {
       try {
         setLoading(true);
         
-        // Ensure the API key is fetched
-        const success = await fetchGeminiApiKey();
-        setApiKeyFetched(success);
-        
+        // Fetch questions directly (no need to fetch API key)
         const fetchedQuestions = await generateMathQuestions(topic, difficulty, questionCount);
         setQuestions(fetchedQuestions);
       } catch (error) {
@@ -171,9 +166,6 @@ const Test = () => {
         <div className="text-center">
           <h2 className="text-xl font-semibold mb-2">Loading Practice Test</h2>
           <p className="text-gray-600">Preparing {difficulty} questions for {topic}...</p>
-          {!apiKeyFetched && (
-            <p className="text-amber-600 mt-4">Note: Using simulated questions as API key is not available.</p>
-          )}
         </div>
       </div>
     );
