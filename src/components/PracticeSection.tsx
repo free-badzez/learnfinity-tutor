@@ -1,7 +1,7 @@
 
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, Brain, MessageSquare, Calculator, ChevronRight, Lightbulb, Clock, ListChecks, ArrowRight } from 'lucide-react';
+import { BookOpen, Brain, MessageSquare, Calculator, ChevronRight, Lightbulb, Clock, ListChecks, ArrowRight, Check } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
