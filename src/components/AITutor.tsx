@@ -5,7 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { solveMathProblem, fetchGeminiApiKey } from '@/services/geminiService';
+import { solveMathProblem } from '@/services/geminiService';
 import { toast } from "@/hooks/use-toast";
 
 const AITutor = () => {
@@ -14,53 +14,16 @@ const AITutor = () => {
     {
       role: "assistant",
       content: "Hello! I'm your personal mathematics tutor. How can I help you today? You can ask me to solve problems, explain concepts, or guide you through math topics.",
-      timestamp: new Date()
-    }
+      timestamp: new Date(),
+    },
   ]);
   const [isTyping, setIsTyping] = useState(false);
   const [expandedView, setExpandedView] = useState(false);
-  const [apiKeyFetched, setApiKeyFetched] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
-  
-  // Sample suggested questions
-  const suggestedQuestions = [
-    "Can you solve x^2 - 5x + 6 = 0?",
-    "Explain how to find the derivative of sin(x^2)",
-    "What is the area of a circle with radius 5cm?",
-    "How do I solve this system of equations: 2x + y = 7 and x - y = 1?"
-  ];
-
-  // Sample practice topics
-  const recentTopics = [
-    { name: "Quadratic Functions", progress: 65 },
-    { name: "Limits and Continuity", progress: 40 },
-    { name: "Trigonometric Identities", progress: 80 }
-  ];
 
   useEffect(() => {
     scrollToBottom();
   }, [conversation]);
-
-  useEffect(() => {
-    // Fetch Gemini API key on component mount
-    const fetchKey = async () => {
-      try {
-        const success = await fetchGeminiApiKey();
-        setApiKeyFetched(success);
-        if (!success) {
-          toast({
-            title: "API Key Not Found",
-            description: "The AI tutor is running in limited mode. Some features may not be available.",
-            variant: "destructive"
-          });
-        }
-      } catch (error) {
-        console.error("Error fetching API key:", error);
-      }
-    };
-    
-    fetchKey();
-  }, []);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -72,43 +35,43 @@ const AITutor = () => {
 
   const handleSendMessage = async () => {
     if (userInput.trim() === "") return;
-    
+
     // Add user message to conversation
     const newConversation = [
       ...conversation,
       {
         role: "user",
         content: userInput,
-        timestamp: new Date()
-      }
+        timestamp: new Date(),
+      },
     ];
-    
+
     setConversation(newConversation);
     setUserInput("");
     setIsTyping(true);
-    
+
     try {
       // Use Gemini to solve the math problem
       const response = await solveMathProblem(userInput);
-      
+
       setConversation([
         ...newConversation,
         {
           role: "assistant",
           content: response,
-          timestamp: new Date()
-        }
+          timestamp: new Date(),
+        },
       ]);
     } catch (error) {
       console.error("Error getting response:", error);
-      
+
       setConversation([
         ...newConversation,
         {
           role: "assistant",
           content: "I'm sorry, I encountered an error while processing your question. Please try again later.",
-          timestamp: new Date()
-        }
+          timestamp: new Date(),
+        },
       ]);
     } finally {
       setIsTyping(false);
@@ -121,13 +84,6 @@ const AITutor = () => {
     }
   };
 
-  const handleSuggestedQuestion = (question: string) => {
-    setUserInput(question);
-    setTimeout(() => {
-      handleSendMessage();
-    }, 100);
-  };
-
   const formatTime = (date: Date) => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
@@ -137,13 +93,12 @@ const AITutor = () => {
       {
         role: "assistant",
         content: "Hello! I'm your personal mathematics tutor. How can I help you today? You can ask me to solve problems, explain concepts, or guide you through math topics.",
-        timestamp: new Date()
-      }
+        timestamp: new Date(),
+      },
     ]);
   };
 
   return (
-    
     <div className={`min-h-screen pt-16 bg-gray-50 ${expandedView ? 'overflow-hidden' : ''}`}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8">
@@ -151,10 +106,10 @@ const AITutor = () => {
             <h1 className="text-2xl md:text-3xl font-bold">AI Tutor</h1>
             <p className="text-gray-600 mt-1">Your personal mathematics learning assistant</p>
           </div>
-          
+
           <div className="mt-4 md:mt-0">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setExpandedView(!expandedView)}
               className="border-tutor-blue text-tutor-blue hover:bg-tutor-light-blue"
             >
@@ -174,88 +129,6 @@ const AITutor = () => {
         </div>
 
         <div className={`grid ${expandedView ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-4'} gap-8`}>
-          {/* Sidebar - only shown in compact view */}
-          {!expandedView && (
-            <div className="lg:col-span-1">
-              <Card className="bg-white shadow-soft mb-6">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg flex items-center">
-                    <Brain className="h-5 w-5 mr-2 text-tutor-blue" />
-                    AI Capabilities
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-3">
-                  <div className="flex items-start">
-                    <div className="bg-tutor-light-blue rounded-full p-1.5 mr-3">
-                      <Calculator className="h-4 w-4 text-tutor-blue" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium">Problem Solving</h4>
-                      <p className="text-xs text-gray-500">Step-by-step solutions for math problems</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start">
-                    <div className="bg-tutor-light-blue rounded-full p-1.5 mr-3">
-                      <Lightbulb className="h-4 w-4 text-tutor-blue" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium">Concept Explanations</h4>
-                      <p className="text-xs text-gray-500">Clear explanations of mathematical concepts</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start">
-                    <div className="bg-tutor-light-blue rounded-full p-1.5 mr-3">
-                      <Sigma className="h-4 w-4 text-tutor-blue" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium">Formula Support</h4>
-                      <p className="text-xs text-gray-500">Access to mathematical formulas and theorems</p>
-                    </div>
-                  </div>
-                  
-                  <div className="flex items-start">
-                    <div className="bg-tutor-light-blue rounded-full p-1.5 mr-3">
-                      <BookOpen className="h-4 w-4 text-tutor-blue" />
-                    </div>
-                    <div>
-                      <h4 className="text-sm font-medium">Practice Generation</h4>
-                      <p className="text-xs text-gray-500">Creates practice problems for any topic</p>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-              
-              <Card className="bg-white shadow-soft">
-                <CardHeader className="pb-2">
-                  <CardTitle className="text-lg">Recent Topics</CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  {recentTopics.map((topic, index) => (
-                    <div key={index} className="space-y-2">
-                      <div className="flex justify-between text-sm">
-                        <span className="font-medium">{topic.name}</span>
-                        <span className="text-gray-500">{topic.progress}%</span>
-                      </div>
-                      <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden">
-                        <div 
-                          className="h-full bg-tutor-blue rounded-full"
-                          style={{ width: `${topic.progress}%` }}
-                        ></div>
-                      </div>
-                    </div>
-                  ))}
-                  
-                  <Button variant="outline" className="w-full mt-2 text-tutor-blue border-tutor-blue">
-                    <PlusCircle className="h-4 w-4 mr-2" />
-                    Explore More Topics
-                  </Button>
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
           {/* Chat Area */}
           <div className={`${expandedView ? 'col-span-1' : 'lg:col-span-3'} ${expandedView ? 'h-[calc(100vh-170px)]' : ''}`}>
             <Card className={`bg-white shadow-soft ${expandedView ? 'h-full flex flex-col' : ''}`}>
@@ -269,26 +142,26 @@ const AITutor = () => {
                     <p className="text-xs text-green-600">Online • Ready to help</p>
                   </div>
                 </div>
-                
+
                 <Button variant="ghost" size="sm" className="text-gray-500" onClick={handleRefresh}>
                   <RefreshCw className="h-4 w-4" />
                   <span className="sr-only">Refresh conversation</span>
                 </Button>
               </CardHeader>
-              
+
               <Separator />
-              
+
               <CardContent className={`p-4 ${expandedView ? 'flex-grow overflow-y-auto' : 'h-[500px] overflow-y-auto'}`}>
                 <div className="space-y-4">
                   {conversation.map((message, index) => (
-                    <div 
-                      key={index} 
+                    <div
+                      key={index}
                       className={`flex ${message.role === 'user' ? 'justify-end' : 'justify-start'}`}
                     >
-                      <div 
+                      <div
                         className={`max-w-[80%] rounded-lg p-3 ${
-                          message.role === 'user' 
-                            ? 'bg-tutor-blue text-white ml-auto' 
+                          message.role === 'user'
+                            ? 'bg-tutor-blue text-white ml-auto'
                             : 'bg-gray-100 text-gray-800'
                         }`}
                       >
@@ -299,7 +172,7 @@ const AITutor = () => {
                       </div>
                     </div>
                   ))}
-                  
+
                   {isTyping && (
                     <div className="flex justify-start">
                       <div className="bg-gray-100 rounded-lg p-3">
@@ -314,27 +187,8 @@ const AITutor = () => {
                   <div ref={messagesEndRef} />
                 </div>
               </CardContent>
-              
+
               <div className="p-4 border-t border-gray-100">
-                {conversation.length === 1 && (
-                  <div className="mb-4">
-                    <p className="text-sm text-gray-500 mb-2">Suggested questions:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {suggestedQuestions.map((question, index) => (
-                        <Button 
-                          key={index} 
-                          variant="outline" 
-                          size="sm" 
-                          className="text-xs bg-gray-50 border-gray-200 hover:bg-tutor-light-blue hover:text-tutor-blue hover:border-tutor-blue"
-                          onClick={() => handleSuggestedQuestion(question)}
-                        >
-                          {question}
-                        </Button>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                
                 <div className="flex space-x-2">
                   <Input
                     value={userInput}
@@ -343,8 +197,8 @@ const AITutor = () => {
                     placeholder="Ask about any math concept or problem..."
                     className="rounded-full border-gray-200 focus:border-tutor-blue focus:ring-tutor-blue"
                   />
-                  <Button 
-                    onClick={handleSendMessage} 
+                  <Button
+                    onClick={handleSendMessage}
                     disabled={userInput.trim() === ""}
                     className="rounded-full bg-tutor-blue hover:bg-tutor-dark-blue text-white px-4"
                   >
@@ -352,12 +206,9 @@ const AITutor = () => {
                     <span className="sr-only">Send</span>
                   </Button>
                 </div>
-                
+
                 <p className="text-xs text-gray-500 mt-2 text-center">
-                  {apiKeyFetched 
-                    ? "The AI tutor can explain concepts, solve problems, and provide step-by-step solutions."
-                    : "Running in limited mode. Some features may not be available."
-                  }
+                  The AI tutor can explain concepts, solve problems, and provide step-by-step solutions.
                 </p>
               </div>
             </Card>
