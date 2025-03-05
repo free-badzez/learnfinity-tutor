@@ -9,6 +9,7 @@ import NotFound from "./pages/NotFound";
 import Dashboard from "./components/Dashboard";
 import PracticeSection from "./components/PracticeSection";
 import AITutor from "./components/AITutor";
+import Test from "./components/Test";
 import Navbar from "./components/Navbar";
 
 const queryClient = new QueryClient();
@@ -24,6 +25,7 @@ const App = () => (
           <Route path="/" element={<Index />} />
           <Route path="/dashboard" element={<Dashboard />} />
           <Route path="/practice" element={<PracticeSection />} />
+          <Route path="/test" element={<Test />} />
           <Route path="/ai-tutor" element={<AITutor />} />
           <Route path="*" element={<NotFound />} />
         </Routes>

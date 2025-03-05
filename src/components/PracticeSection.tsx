@@ -1,122 +1,16 @@
 
 import React, { useState } from 'react';
-import { BookOpen, Brain, Check, MessageSquare, Calculator, ChevronRight, Lightbulb, PlusCircle, ListChecks, Clock } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { BookOpen, Brain, MessageSquare, Calculator, ChevronRight, Lightbulb, Clock, ListChecks, ArrowRight } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
 
 const PracticeSection = () => {
-  const [showExplanation, setShowExplanation] = useState(false);
-  const [currentQuestion, setCurrentQuestion] = useState(0);
-  const [userAnswer, setUserAnswer] = useState("");
-  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
-
-  // Sample practice questions
-  const practiceQuestions = [
-    {
-      id: 1,
-      topic: "Algebra",
-      question: "Solve for x: 2x + 7 = 15",
-      answer: "4",
-      difficulty: "Easy",
-      explanation: `
-        Step 1: Subtract 7 from both sides.
-        2x + 7 - 7 = 15 - 7
-        2x = 8
-        
-        Step 2: Divide both sides by 2.
-        2x ÷ 2 = 8 ÷ 2
-        x = 4
-      `
-    },
-    {
-      id: 2,
-      topic: "Algebra",
-      question: "Solve for x: 3x - 5 = 13",
-      answer: "6",
-      difficulty: "Easy",
-      explanation: `
-        Step 1: Add 5 to both sides.
-        3x - 5 + 5 = 13 + 5
-        3x = 18
-        
-        Step 2: Divide both sides by 3.
-        3x ÷ 3 = 18 ÷ 3
-        x = 6
-      `
-    },
-    {
-      id: 3,
-      topic: "Geometry",
-      question: "Find the area of a circle with radius 5 cm. Use π = 3.14.",
-      answer: "78.5",
-      difficulty: "Medium",
-      explanation: `
-        The formula for the area of a circle is A = πr².
-        
-        A = π × 5²
-        A = 3.14 × 25
-        A = 78.5 cm²
-      `
-    },
-    {
-      id: 4,
-      topic: "Calculus",
-      question: "Find the derivative of f(x) = x² + 3x + 2",
-      answer: "2x + 3",
-      difficulty: "Medium",
-      explanation: `
-        We use the power rule and linearity of differentiation:
-        
-        f(x) = x² + 3x + 2
-        f'(x) = 2x + 3 + 0
-        f'(x) = 2x + 3
-      `
-    },
-    {
-      id: 5,
-      topic: "Trigonometry",
-      question: "If sin(θ) = 0.5, what is θ in degrees?",
-      answer: "30",
-      difficulty: "Medium",
-      explanation: `
-        We know that sin(θ) = 0.5
-        
-        One of the standard angles where sin(θ) = 0.5 is θ = 30°
-        
-        Note: There are other angles that also satisfy this equation, such as 150°, 390°, etc.
-        But the smallest positive angle is 30°.
-      `
-    },
-  ];
-
-  const handleCheckAnswer = () => {
-    const isAnswerCorrect = userAnswer.trim() === practiceQuestions[currentQuestion].answer;
-    setIsCorrect(isAnswerCorrect);
-    if (!isAnswerCorrect) {
-      setShowExplanation(true);
-    }
-  };
-
-  const handleNextQuestion = () => {
-    if (currentQuestion < practiceQuestions.length - 1) {
-      setCurrentQuestion(currentQuestion + 1);
-      setUserAnswer("");
-      setIsCorrect(null);
-      setShowExplanation(false);
-    }
-  };
-
-  const handlePreviousQuestion = () => {
-    if (currentQuestion > 0) {
-      setCurrentQuestion(currentQuestion - 1);
-      setUserAnswer("");
-      setIsCorrect(null);
-      setShowExplanation(false);
-    }
-  };
+  const navigate = useNavigate();
+  const [selectedTopic, setSelectedTopic] = useState("");
+  const [selectedDifficulty, setSelectedDifficulty] = useState("");
 
   // Topic categories for sidebar
   const topics = [
@@ -127,6 +21,17 @@ const PracticeSection = () => {
     { name: "Statistics", count: 10 },
     { name: "Probability", count: 8 },
   ];
+
+  // Difficulty levels
+  const difficulties = ["Easy", "Medium", "Hard"];
+
+  const startTest = () => {
+    if (!selectedTopic || !selectedDifficulty) {
+      return;
+    }
+    
+    navigate('/test', { state: { topic: selectedTopic, difficulty: selectedDifficulty } });
+  };
 
   return (
     <div className="min-h-screen pt-16 bg-gray-50">
@@ -160,7 +65,8 @@ const PracticeSection = () => {
                   {topics.map((topic) => (
                     <div 
                       key={topic.name}
-                      className="flex items-center justify-between p-2 rounded-md hover:bg-gray-50 cursor-pointer transition-colors"
+                      className={`flex items-center justify-between p-2 rounded-md hover:bg-gray-50 cursor-pointer transition-colors ${selectedTopic === topic.name ? 'bg-tutor-light-blue/50 text-tutor-blue font-medium' : ''}`}
+                      onClick={() => setSelectedTopic(topic.name)}
                     >
                       <span className="text-sm font-medium">{topic.name}</span>
                       <span className="text-xs bg-gray-100 px-2 py-1 rounded-full">{topic.count}</span>
@@ -190,144 +96,118 @@ const PracticeSection = () => {
 
           {/* Main Content */}
           <div className="lg:col-span-3">
-            <Card className="bg-white shadow-soft">
-              <CardHeader className="flex flex-row items-center justify-between pb-2">
-                <div>
-                  <CardTitle className="text-lg">Practice Question {currentQuestion + 1}/{practiceQuestions.length}</CardTitle>
-                  <p className="text-sm text-gray-500 mt-1">{practiceQuestions[currentQuestion].topic} - {practiceQuestions[currentQuestion].difficulty}</p>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={handlePreviousQuestion}
-                    disabled={currentQuestion === 0}
-                    className="text-gray-500"
-                  >
-                    Previous
-                  </Button>
-                  <Button 
-                    variant="outline" 
-                    size="sm" 
-                    onClick={handleNextQuestion}
-                    disabled={currentQuestion === practiceQuestions.length - 1}
-                    className="text-gray-500"
-                  >
-                    Next
-                  </Button>
-                </div>
+            <Card className="bg-white shadow-soft mb-6">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg">Create a Practice Test</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="mb-6 p-4 bg-gray-50 rounded-lg">
-                  <p className="font-medium">{practiceQuestions[currentQuestion].question}</p>
-                </div>
-
                 <div className="mb-6">
-                  <label className="block text-sm font-medium mb-1" htmlFor="answer">Your Answer:</label>
-                  <div className="flex space-x-2">
-                    <Input
-                      id="answer"
-                      placeholder="Enter your answer here"
-                      value={userAnswer}
-                      onChange={(e) => setUserAnswer(e.target.value)}
-                      className={`border ${
-                        isCorrect === null ? 'border-gray-200' : 
-                        isCorrect ? 'border-green-500' : 'border-red-500'
-                      }`}
-                    />
-                    <Button onClick={handleCheckAnswer} className="bg-tutor-blue hover:bg-tutor-dark-blue">
-                      <Check className="h-4 w-4 mr-2" />
-                      Check
-                    </Button>
-                  </div>
-                  {isCorrect !== null && (
-                    <p className={`mt-2 text-sm ${isCorrect ? 'text-green-600' : 'text-red-600'}`}>
-                      {isCorrect ? 'Correct! Well done.' : 'Not quite right. Try again or check the explanation.'}
-                    </p>
+                  <h3 className="text-md font-medium mb-3">Selected Topic</h3>
+                  {selectedTopic ? (
+                    <div className="flex items-center p-3 bg-tutor-light-blue/50 rounded-lg border border-tutor-light-blue text-tutor-blue">
+                      <BookOpen className="h-5 w-5 mr-2" />
+                      <span className="font-medium">{selectedTopic}</span>
+                    </div>
+                  ) : (
+                    <div className="p-3 bg-gray-100 rounded-lg border border-gray-200 text-gray-500">
+                      Please select a topic from the sidebar
+                    </div>
                   )}
                 </div>
 
-                <div className="flex justify-between items-center mb-4">
-                  <Button 
-                    variant="ghost" 
-                    onClick={() => setShowExplanation(!showExplanation)}
-                    className="text-tutor-blue hover:text-tutor-dark-blue hover:bg-tutor-light-blue/50"
-                  >
-                    {showExplanation ? 'Hide Explanation' : 'Show Explanation'}
-                    <Lightbulb className="h-4 w-4 ml-2" />
-                  </Button>
-
-                  <Button 
-                    variant="outline" 
-                    className="text-tutor-blue border-tutor-blue hover:bg-tutor-light-blue hover:text-tutor-dark-blue"
-                  >
-                    <Brain className="h-4 w-4 mr-2" />
-                    Ask AI Tutor
-                  </Button>
+                <div className="mb-6">
+                  <h3 className="text-md font-medium mb-3">Difficulty Level</h3>
+                  <div className="grid grid-cols-3 gap-4">
+                    {difficulties.map((difficulty) => (
+                      <div 
+                        key={difficulty}
+                        className={`p-3 rounded-lg border cursor-pointer transition-colors flex flex-col items-center justify-center ${
+                          selectedDifficulty === difficulty 
+                            ? 'bg-tutor-light-blue/50 border-tutor-light-blue text-tutor-blue' 
+                            : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
+                        }`}
+                        onClick={() => setSelectedDifficulty(difficulty)}
+                      >
+                        <span className="font-medium">{difficulty}</span>
+                        <span className="text-xs mt-1">
+                          {difficulty === "Easy" ? "10 questions, 20 min" : 
+                           difficulty === "Medium" ? "5 questions, 15 min" : 
+                           "5 questions, 10 min"}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
                 </div>
 
-                {showExplanation && (
-                  <div className="p-4 bg-tutor-light-blue/50 rounded-lg border border-tutor-light-blue animate-fade-in">
-                    <div className="flex items-center mb-2">
-                      <Lightbulb className="h-5 w-5 text-tutor-blue mr-2" />
-                      <h4 className="font-medium">Explanation</h4>
-                    </div>
-                    <div className="pl-4 border-l-2 border-tutor-blue">
-                      <p className="text-sm whitespace-pre-line">{practiceQuestions[currentQuestion].explanation}</p>
-                    </div>
-                  </div>
-                )}
+                <div className="mt-6">
+                  <Button 
+                    onClick={startTest}
+                    disabled={!selectedTopic || !selectedDifficulty}
+                    className="w-full bg-tutor-blue hover:bg-tutor-dark-blue"
+                  >
+                    Start Practice Test
+                    <ArrowRight className="h-4 w-4 ml-2" />
+                  </Button>
+                  
+                  {(!selectedTopic || !selectedDifficulty) && (
+                    <p className="text-sm text-gray-500 mt-2 text-center">
+                      Please select both a topic and difficulty level to begin
+                    </p>
+                  )}
+                </div>
               </CardContent>
             </Card>
 
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <Card className="bg-white shadow-soft">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg flex items-center">
-                    <MessageSquare className="h-5 w-5 mr-2 text-tutor-blue" />
-                    Similar Questions
+                    <Brain className="h-5 w-5 mr-2 text-tutor-blue" />
+                    AI-Generated Practice
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    <div className="p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors flex justify-between items-center">
-                      <p className="text-sm">Solve for x: 5x - 3 = 27</p>
-                      <ChevronRight className="h-4 w-4 text-gray-400" />
-                    </div>
-                    <div className="p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors flex justify-between items-center">
-                      <p className="text-sm">Solve for x: 4x + 9 = 21</p>
-                      <ChevronRight className="h-4 w-4 text-gray-400" />
-                    </div>
-                    <div className="p-3 hover:bg-gray-50 rounded-lg cursor-pointer transition-colors flex justify-between items-center">
-                      <p className="text-sm">If 3x - 8 = 10, find the value of x</p>
-                      <ChevronRight className="h-4 w-4 text-gray-400" />
-                    </div>
-                  </div>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Our AI generates personalized practice questions based on your selected topic and difficulty.
+                  </p>
+                  <ul className="space-y-3">
+                    <li className="flex items-start">
+                      <span className="bg-tutor-light-blue rounded-full p-1 mr-2 mt-0.5">
+                        <Check className="h-3 w-3 text-tutor-blue" />
+                      </span>
+                      <span className="text-sm">Adaptive questions matched to your skill level</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="bg-tutor-light-blue rounded-full p-1 mr-2 mt-0.5">
+                        <Check className="h-3 w-3 text-tutor-blue" />
+                      </span>
+                      <span className="text-sm">Explanations for every problem</span>
+                    </li>
+                    <li className="flex items-start">
+                      <span className="bg-tutor-light-blue rounded-full p-1 mr-2 mt-0.5">
+                        <Check className="h-3 w-3 text-tutor-blue" />
+                      </span>
+                      <span className="text-sm">Step-by-step solutions</span>
+                    </li>
+                  </ul>
                 </CardContent>
               </Card>
 
               <Card className="bg-white shadow-soft">
                 <CardHeader className="pb-2">
                   <CardTitle className="text-lg flex items-center">
-                    <Calculator className="h-5 w-5 mr-2 text-tutor-blue" />
-                    Helpful Tools
+                    <MessageSquare className="h-5 w-5 mr-2 text-tutor-blue" />
+                    Ask the AI Tutor
                   </CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <div className="space-y-3">
-                    <Button variant="outline" className="w-full justify-start text-left">
-                      <Calculator className="h-4 w-4 mr-2" />
-                      Scientific Calculator
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start text-left">
-                      <Lightbulb className="h-4 w-4 mr-2" />
-                      Formula Reference
-                    </Button>
-                    <Button variant="outline" className="w-full justify-start text-left">
-                      <Brain className="h-4 w-4 mr-2" />
-                      Step-by-Step Solver
-                    </Button>
-                  </div>
+                  <p className="text-sm text-gray-600 mb-4">
+                    Get personalized help with any math question or concept you're struggling with.
+                  </p>
+                  <Button className="w-full flex items-center justify-center space-x-2 bg-tutor-blue hover:bg-tutor-dark-blue" onClick={() => navigate('/ai-tutor')}>
+                    <span>Chat with AI Tutor</span>
+                    <ChevronRight className="h-4 w-4" />
+                  </Button>
                 </CardContent>
               </Card>
             </div>
