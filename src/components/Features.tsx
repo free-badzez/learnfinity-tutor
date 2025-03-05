@@ -98,7 +98,7 @@ const Features = () => {
         </div>
       </div>
 
-      <style jsx>{`
+      <style>{`
         .feature-item.show {
           opacity: 1;
           transform: translateY(0);

@@ -1,6 +1,6 @@
 
 import React, { useState } from 'react';
-import { BarChart2, Clock, Brain, BookOpen, TrendingUp, ArrowUpRight, CalendarDays, CheckCircle, User, Search } from 'lucide-react';
+import { BarChart2, Clock, Brain, BookOpen, TrendingUp, ArrowUpRight, CalendarDays, CheckCircle, User, Search, Calendar } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";

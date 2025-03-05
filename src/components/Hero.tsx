@@ -1,6 +1,6 @@
 
 import React, { useEffect, useRef } from 'react';
-import { ArrowRight, Brain, Sparkles, Gauge } from 'lucide-react';
+import { ArrowRight, Brain, Sparkles, Gauge, Calculator, BarChart2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Link } from 'react-router-dom';
 
