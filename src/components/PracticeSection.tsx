@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, Brain, MessageSquare, Calculator, ChevronRight, Lightbulb, Clock, ListChecks, ArrowRight, Check } from 'lucide-react';
@@ -8,23 +9,12 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import ChapterMenu from './ChapterMenu';
-import { hasGeminiApiKey, fetchGeminiApiKey } from '@/services/geminiService';
+import { hasGeminiApiKey } from '@/services/geminiService';
 
 const PracticeSection = () => {
   const navigate = useNavigate();
   const [selectedTopic, setSelectedTopic] = useState("");
   const [selectedDifficulty, setSelectedDifficulty] = useState("");
-  const [apiKeyFetched, setApiKeyFetched] = useState(false);
-
-  // Fetch API key on component mount
-  useEffect(() => {
-    const getApiKey = async () => {
-      const success = await fetchGeminiApiKey();
-      setApiKeyFetched(success);
-    };
-    
-    getApiKey();
-  }, []);
 
   // Topic categories for sidebar
   const topics = [
@@ -43,16 +33,7 @@ const PracticeSection = () => {
     if (!selectedTopic || !selectedDifficulty) {
       return;
     }
-    
-    if (!apiKeyFetched) {
-      toast({
-        title: "API Key Not Available",
-        description: "Unable to fetch the Gemini API key. Please try again later.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
+
     navigate('/test', { state: { topic: selectedTopic, difficulty: selectedDifficulty } });
   };
 
@@ -64,7 +45,7 @@ const PracticeSection = () => {
             <h1 className="text-2xl md:text-3xl font-bold">Practice</h1>
             <p className="text-gray-600 mt-1">Strengthen your skills with guided practice</p>
           </div>
-          
+
           <div className="mt-4 md:mt-0">
             <Tabs defaultValue="all" className="w-full">
               <TabsList className="bg-white shadow-soft">
@@ -86,7 +67,7 @@ const PracticeSection = () => {
               <CardContent>
                 <div className="space-y-1">
                   {topics.map((topic) => (
-                    <div 
+                    <div
                       key={topic.name}
                       className={`flex items-center justify-between p-2 rounded-md hover:bg-gray-50 cursor-pointer transition-colors ${selectedTopic === topic.name ? 'bg-tutor-light-blue/50 text-tutor-blue font-medium' : ''}`}
                       onClick={() => setSelectedTopic(topic.name)}
@@ -126,10 +107,10 @@ const PracticeSection = () => {
               <CardContent>
                 <div className="mb-6">
                   <h3 className="text-md font-medium mb-3">Selected Topic</h3>
-                  <ChapterMenu 
-                    chapters={topics} 
-                    onSelectChapter={setSelectedTopic} 
-                    selectedChapter={selectedTopic} 
+                  <ChapterMenu
+                    chapters={topics}
+                    onSelectChapter={setSelectedTopic}
+                    selectedChapter={selectedTopic}
                   />
                 </div>
 
@@ -137,19 +118,19 @@ const PracticeSection = () => {
                   <h3 className="text-md font-medium mb-3">Difficulty Level</h3>
                   <div className="grid grid-cols-3 gap-4">
                     {difficulties.map((difficulty) => (
-                      <div 
+                      <div
                         key={difficulty}
                         className={`p-3 rounded-lg border cursor-pointer transition-colors flex flex-col items-center justify-center ${
-                          selectedDifficulty === difficulty 
-                            ? 'bg-tutor-light-blue/50 border-tutor-light-blue text-tutor-blue' 
+                          selectedDifficulty === difficulty
+                            ? 'bg-tutor-light-blue/50 border-tutor-light-blue text-tutor-blue'
                             : 'bg-gray-50 border-gray-200 hover:bg-gray-100'
                         }`}
                         onClick={() => setSelectedDifficulty(difficulty)}
                       >
                         <span className="font-medium">{difficulty}</span>
                         <span className="text-xs mt-1">
-                          {difficulty === "Easy" ? "10 questions, 20 min" : 
-                           difficulty === "Medium" ? "5 questions, 15 min" : 
+                          {difficulty === "Easy" ? "10 questions, 20 min" :
+                           difficulty === "Medium" ? "5 questions, 15 min" :
                            "5 questions, 10 min"}
                         </span>
                       </div>
@@ -158,24 +139,18 @@ const PracticeSection = () => {
                 </div>
 
                 <div className="mt-6">
-                  <Button 
+                  <Button
                     onClick={startTest}
-                    disabled={!selectedTopic || !selectedDifficulty || !apiKeyFetched}
+                    disabled={!selectedTopic || !selectedDifficulty}
                     className="w-full bg-tutor-blue hover:bg-tutor-dark-blue"
                   >
                     Start Practice Test
                     <ArrowRight className="h-4 w-4 ml-2" />
                   </Button>
-                  
+
                   {(!selectedTopic || !selectedDifficulty) && (
                     <p className="text-sm text-gray-500 mt-2 text-center">
                       Please select both a topic and difficulty level to begin
-                    </p>
-                  )}
-                  
-                  {!apiKeyFetched && (
-                    <p className="text-sm text-amber-600 mt-2 text-center">
-                      Connecting to AI service...
                     </p>
                   )}
                 </div>
