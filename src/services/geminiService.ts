@@ -1,3 +1,20 @@
+// This service handles the interaction with Google's Gemini API
+
+interface QuestionResponse {
+  question: string;
+  answer: string;
+  explanation: string;
+  options?: string[]; // Added for MCQ format
+}
+
+// Hardcoded API key
+const GEMINI_API_KEY = "AIzaSyCFkxznxuMjikL7o-QLmCPTh7mfhyoIaR8";
+
+// Function to check if API key is set
+export const hasGeminiApiKey = () => {
+  return true; // Always true because the key is hardcoded
+};
+
 export const generateMathQuestions = async (
   topic: string,
   difficulty: "Easy" | "Medium" | "Hard",
@@ -15,35 +32,29 @@ export const generateMathQuestions = async (
 
     The questions should be suitable for ${difficulty} level and focus specifically on ${topic}.`;
 
-    console.log("Sending request to Gemini API with prompt:", prompt);
-
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: {
+  const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash-latest:generateContent?key=${apiKey}`,{
+    method: "POST",
+    headers: {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
           contents: [
             {
               parts: [
-                {
-                  text: prompt,
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.4,
-            topK: 32,
-            topP: 0.95,
-            maxOutputTokens: 2048,
+              {
+                text: prompt,
+              },
+            ],
           },
-        }),
-      }
-    );
-
+        ],
+        generationConfig: {
+          temperature: 0.4,
+          topK: 32,
+          topP: 0.95,
+          maxOutputTokens: 2048,
+        },
+      }),
+    });
     console.log("API response status:", response.status);
 
     if (!response.ok) {
@@ -53,10 +64,7 @@ export const generateMathQuestions = async (
     }
 
     const data = await response.json();
-    console.log("API response data:", data);
-
     const textContent = data.candidates[0].content.parts[0].text;
-    console.log("Extracted text content:", textContent);
 
     // Extract JSON from the response (it may be wrapped in text or code blocks)
     let jsonMatch = textContent.match(/\[[\s\S]*\]/);
@@ -72,6 +80,7 @@ export const generateMathQuestions = async (
   }
 };
 
+// Function to get step-by-step solution for a math problem using Gemini
 export const solveMathProblem = async (problem: string): Promise<string> => {
   try {
     const prompt = `Solve this mathematics problem with detailed step-by-step explanation:
@@ -79,32 +88,30 @@ export const solveMathProblem = async (problem: string): Promise<string> => {
     
     Be very thorough in your explanation, showing each mathematical step clearly and explaining the reasoning. Write the final answer clearly at the end.`;
 
-    const response = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=${GEMINI_API_KEY}`,
-      {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          contents: [
-            {
-              parts: [
-                {
-                  text: prompt,
-                },
-              ],
-            },
-          ],
-          generationConfig: {
-            temperature: 0.2,
-            topK: 32,
-            topP: 0.95,
-            maxOutputTokens: 2048,
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${GEMINI_API_KEY}`,
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: prompt,
+              },
+            ],
           },
-        }),
-      }
-    );
+        ],
+        generationConfig: {
+          temperature: 0.2,
+          topK: 32,
+          topP: 0.95,
+          maxOutputTokens: 2048,
+        },
+      }),
+    });
 
     if (!response.ok) {
       const errorText = await response.text();
