@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Brain, Send, Lightbulb, Calculator, ArrowRight, Sigma, BookOpen, RefreshCw, Maximize2, Minimize2, PlusCircle, X, MessageSquare } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -6,6 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { solveMathProblem, fetchGeminiApiKey } from '@/services/geminiService';
+import { toast } from "@/hooks/use-toast";
 
 const AITutor = () => {
   const [userInput, setUserInput] = useState("");
@@ -18,14 +19,15 @@ const AITutor = () => {
   ]);
   const [isTyping, setIsTyping] = useState(false);
   const [expandedView, setExpandedView] = useState(false);
+  const [apiKeyFetched, setApiKeyFetched] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   // Sample suggested questions
   const suggestedQuestions = [
-    "Can you explain how to solve quadratic equations?",
-    "Help me understand the chain rule in calculus",
-    "What is the Pythagorean theorem?",
-    "How do I find the derivative of sin(x)?"
+    "Can you solve x^2 - 5x + 6 = 0?",
+    "Explain how to find the derivative of sin(x^2)",
+    "What is the area of a circle with radius 5cm?",
+    "How do I solve this system of equations: 2x + y = 7 and x - y = 1?"
   ];
 
   // Sample practice topics
@@ -39,6 +41,27 @@ const AITutor = () => {
     scrollToBottom();
   }, [conversation]);
 
+  useEffect(() => {
+    // Fetch Gemini API key on component mount
+    const fetchKey = async () => {
+      try {
+        const success = await fetchGeminiApiKey();
+        setApiKeyFetched(success);
+        if (!success) {
+          toast({
+            title: "API Key Not Found",
+            description: "The AI tutor is running in limited mode. Some features may not be available.",
+            variant: "destructive"
+          });
+        }
+      } catch (error) {
+        console.error("Error fetching API key:", error);
+      }
+    };
+    
+    fetchKey();
+  }, []);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -47,7 +70,7 @@ const AITutor = () => {
     setUserInput(e.target.value);
   };
 
-  const handleSendMessage = () => {
+  const handleSendMessage = async () => {
     if (userInput.trim() === "") return;
     
     // Add user message to conversation
@@ -64,22 +87,9 @@ const AITutor = () => {
     setUserInput("");
     setIsTyping(true);
     
-    // Simulate AI response (with delay to mimic thinking)
-    setTimeout(() => {
-      let response;
-      
-      // Very simple pattern matching to generate relevant responses
-      if (userInput.toLowerCase().includes("quadratic")) {
-        response = "A quadratic equation has the form ax² + bx + c = 0, where a, b, and c are constants and a ≠ 0. You can solve it using the quadratic formula: x = (-b ± √(b² - 4ac)) / 2a. Would you like me to demonstrate with an example?";
-      } else if (userInput.toLowerCase().includes("chain rule")) {
-        response = "The chain rule is a formula for computing the derivative of a composite function. If y = f(g(x)), then dy/dx = (df/dg) × (dg/dx). This rule is essential when dealing with nested functions. Would you like to see an example?";
-      } else if (userInput.toLowerCase().includes("pythagorean")) {
-        response = "The Pythagorean theorem states that in a right triangle, the square of the length of the hypotenuse equals the sum of the squares of the other two sides. If the two legs have lengths a and b, and the hypotenuse has length c, then a² + b² = c². This fundamental theorem has many applications in mathematics and real life.";
-      } else if (userInput.toLowerCase().includes("derivative") && userInput.toLowerCase().includes("sin")) {
-        response = "The derivative of sin(x) is cos(x). This comes from applying the limit definition of the derivative and using the properties of trigonometric functions. Would you like me to show you the proof or some examples?";
-      } else {
-        response = "That's a great question! I'd be happy to help you understand this concept better. Let's break it down step by step. What specific aspect of this would you like me to clarify?";
-      }
+    try {
+      // Use Gemini to solve the math problem
+      const response = await solveMathProblem(userInput);
       
       setConversation([
         ...newConversation,
@@ -89,9 +99,20 @@ const AITutor = () => {
           timestamp: new Date()
         }
       ]);
+    } catch (error) {
+      console.error("Error getting response:", error);
       
+      setConversation([
+        ...newConversation,
+        {
+          role: "assistant",
+          content: "I'm sorry, I encountered an error while processing your question. Please try again later.",
+          timestamp: new Date()
+        }
+      ]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -111,7 +132,18 @@ const AITutor = () => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  const handleRefresh = () => {
+    setConversation([
+      {
+        role: "assistant",
+        content: "Hello! I'm your personal mathematics tutor. How can I help you today? You can ask me to solve problems, explain concepts, or guide you through math topics.",
+        timestamp: new Date()
+      }
+    ]);
+  };
+
   return (
+    
     <div className={`min-h-screen pt-16 bg-gray-50 ${expandedView ? 'overflow-hidden' : ''}`}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between mb-8">
@@ -238,7 +270,7 @@ const AITutor = () => {
                   </div>
                 </div>
                 
-                <Button variant="ghost" size="sm" className="text-gray-500">
+                <Button variant="ghost" size="sm" className="text-gray-500" onClick={handleRefresh}>
                   <RefreshCw className="h-4 w-4" />
                   <span className="sr-only">Refresh conversation</span>
                 </Button>
@@ -260,7 +292,7 @@ const AITutor = () => {
                             : 'bg-gray-100 text-gray-800'
                         }`}
                       >
-                        <p className="text-sm">{message.content}</p>
+                        <p className="text-sm whitespace-pre-line">{message.content}</p>
                         <p className={`text-xs mt-1 ${message.role === 'user' ? 'text-blue-100' : 'text-gray-500'}`}>
                           {formatTime(message.timestamp)}
                         </p>
@@ -321,7 +353,12 @@ const AITutor = () => {
                   </Button>
                 </div>
                 
-                <p className="text-xs text-gray-500 mt-2 text-center">The AI tutor can explain concepts, solve problems, and provide practice exercises.</p>
+                <p className="text-xs text-gray-500 mt-2 text-center">
+                  {apiKeyFetched 
+                    ? "The AI tutor can explain concepts, solve problems, and provide step-by-step solutions."
+                    : "Running in limited mode. Some features may not be available."
+                  }
+                </p>
               </div>
             </Card>
           </div>
