@@ -8,7 +8,7 @@ interface QuestionResponse {
 }
 
 // Hardcoded API key
-const GEMINI_API_KEY = "your-hardcoded-api-key-here";
+const GEMINI_API_KEY = "AIzaSyCFkxznxuMjikL7o-QLmCPTh7mfhyoIaR8";
 
 // Function to check if API key is set
 export const hasGeminiApiKey = () => {
