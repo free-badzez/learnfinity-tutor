@@ -1,6 +1,5 @@
 
-// This is a placeholder for Gemini API integration
-// In a production environment, you would need proper API key management
+// This service handles the interaction with Google's Gemini API
 
 interface QuestionResponse {
   question: string;
@@ -8,16 +7,90 @@ interface QuestionResponse {
   explanation: string;
 }
 
+// Store API key (for demonstration - in production, this would be securely managed)
+let apiKey = "";
+
+// Function to set the API key
+export const setGeminiApiKey = (key: string) => {
+  apiKey = key;
+};
+
+// Function to check if API key is set
+export const hasGeminiApiKey = () => {
+  return !!apiKey;
+};
+
 export const generateMathQuestions = async (
   topic: string,
   difficulty: "Easy" | "Medium" | "Hard",
   count: number = 5
 ): Promise<QuestionResponse[]> => {
-  // In a real implementation, this would make an API call to Gemini
-  // For now, we'll simulate the response with a delay
-  
   console.log(`Generating ${count} ${difficulty} questions for ${topic}`);
   
+  // If no API key is set, use the simulated response
+  if (!apiKey) {
+    return simulateQuestions(topic, difficulty, count);
+  }
+  
+  try {
+    const prompt = `Generate ${count} ${difficulty} level math questions about ${topic} with answers and explanations. 
+    Format the response as a JSON array of objects with each object having question, answer, and explanation properties.`;
+    
+    const response = await fetch("https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${apiKey}`
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [
+              {
+                text: prompt
+              }
+            ]
+          }
+        ],
+        generationConfig: {
+          temperature: 0.4,
+          topK: 32,
+          topP: 0.95,
+          maxOutputTokens: 2048,
+        }
+      })
+    });
+    
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error("Gemini API error:", errorText);
+      throw new Error(`Gemini API error: ${response.status} ${response.statusText}`);
+    }
+    
+    const data = await response.json();
+    const textContent = data.candidates[0].content.parts[0].text;
+    
+    // Extract JSON from the response (it may be wrapped in text or code blocks)
+    let jsonMatch = textContent.match(/\[[\s\S]*\]/);
+    if (!jsonMatch) {
+      throw new Error("Could not parse response as JSON array");
+    }
+    
+    const questions = JSON.parse(jsonMatch[0]) as QuestionResponse[];
+    return questions.slice(0, count); // Ensure we only return the requested number
+  } catch (error) {
+    console.error("Error generating questions with Gemini:", error);
+    // Fallback to simulated questions if API fails
+    return simulateQuestions(topic, difficulty, count);
+  }
+};
+
+// Simulated response function (kept from original implementation for fallback)
+const simulateQuestions = (
+  topic: string,
+  difficulty: "Easy" | "Medium" | "Hard",
+  count: number
+): Promise<QuestionResponse[]> => {
   return new Promise((resolve) => {
     setTimeout(() => {
       // Generate simulated questions based on topic and difficulty

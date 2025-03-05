@@ -6,11 +6,17 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
+import { Input } from "@/components/ui/input";
+import { toast } from "@/hooks/use-toast";
+import ChapterMenu from './ChapterMenu';
+import { hasGeminiApiKey, setGeminiApiKey } from '@/services/geminiService';
 
 const PracticeSection = () => {
   const navigate = useNavigate();
   const [selectedTopic, setSelectedTopic] = useState("");
   const [selectedDifficulty, setSelectedDifficulty] = useState("");
+  const [geminiApiKey, setGeminiKeyState] = useState("");
+  const [showApiKeyInput, setShowApiKeyInput] = useState(!hasGeminiApiKey());
 
   // Topic categories for sidebar
   const topics = [
@@ -30,7 +36,35 @@ const PracticeSection = () => {
       return;
     }
     
+    if (!hasGeminiApiKey()) {
+      toast({
+        title: "API Key Required",
+        description: "Please enter a Gemini API key to generate questions.",
+        variant: "destructive"
+      });
+      setShowApiKeyInput(true);
+      return;
+    }
+    
     navigate('/test', { state: { topic: selectedTopic, difficulty: selectedDifficulty } });
+  };
+
+  const saveApiKey = () => {
+    if (!geminiApiKey.trim()) {
+      toast({
+        title: "Invalid API Key",
+        description: "Please enter a valid Gemini API key.",
+        variant: "destructive"
+      });
+      return;
+    }
+    
+    setGeminiApiKey(geminiApiKey.trim());
+    setShowApiKeyInput(false);
+    toast({
+      title: "API Key Saved",
+      description: "Your Gemini API key has been saved for this session.",
+    });
   };
 
   return (
@@ -103,16 +137,11 @@ const PracticeSection = () => {
               <CardContent>
                 <div className="mb-6">
                   <h3 className="text-md font-medium mb-3">Selected Topic</h3>
-                  {selectedTopic ? (
-                    <div className="flex items-center p-3 bg-tutor-light-blue/50 rounded-lg border border-tutor-light-blue text-tutor-blue">
-                      <BookOpen className="h-5 w-5 mr-2" />
-                      <span className="font-medium">{selectedTopic}</span>
-                    </div>
-                  ) : (
-                    <div className="p-3 bg-gray-100 rounded-lg border border-gray-200 text-gray-500">
-                      Please select a topic from the sidebar
-                    </div>
-                  )}
+                  <ChapterMenu 
+                    chapters={topics} 
+                    onSelectChapter={setSelectedTopic} 
+                    selectedChapter={selectedTopic} 
+                  />
                 </div>
 
                 <div className="mb-6">
@@ -138,6 +167,25 @@ const PracticeSection = () => {
                     ))}
                   </div>
                 </div>
+
+                {showApiKeyInput && (
+                  <div className="mb-6 p-4 border rounded-lg bg-gray-50">
+                    <h3 className="text-md font-medium mb-3">Gemini API Key</h3>
+                    <p className="text-sm text-gray-600 mb-3">
+                      Enter your Gemini API key to generate AI-powered practice questions.
+                    </p>
+                    <div className="flex items-center gap-2">
+                      <Input
+                        type="password"
+                        placeholder="Enter your Gemini API key"
+                        value={geminiApiKey}
+                        onChange={(e) => setGeminiKeyState(e.target.value)}
+                        className="flex-1"
+                      />
+                      <Button onClick={saveApiKey}>Save</Button>
+                    </div>
+                  </div>
+                )}
 
                 <div className="mt-6">
                   <Button 
