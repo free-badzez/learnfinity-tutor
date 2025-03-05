@@ -1,5 +1,4 @@
-
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, Brain, MessageSquare, Calculator, ChevronRight, Lightbulb, Clock, ListChecks, ArrowRight, Check } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -9,14 +8,23 @@ import { Separator } from "@/components/ui/separator";
 import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import ChapterMenu from './ChapterMenu';
-import { hasGeminiApiKey, setGeminiApiKey } from '@/services/geminiService';
+import { hasGeminiApiKey, fetchGeminiApiKey } from '@/services/geminiService';
 
 const PracticeSection = () => {
   const navigate = useNavigate();
   const [selectedTopic, setSelectedTopic] = useState("");
   const [selectedDifficulty, setSelectedDifficulty] = useState("");
-  const [geminiApiKey, setGeminiKeyState] = useState("");
-  const [showApiKeyInput, setShowApiKeyInput] = useState(!hasGeminiApiKey());
+  const [apiKeyFetched, setApiKeyFetched] = useState(false);
+
+  // Fetch API key on component mount
+  useEffect(() => {
+    const getApiKey = async () => {
+      const success = await fetchGeminiApiKey();
+      setApiKeyFetched(success);
+    };
+    
+    getApiKey();
+  }, []);
 
   // Topic categories for sidebar
   const topics = [
@@ -36,35 +44,16 @@ const PracticeSection = () => {
       return;
     }
     
-    if (!hasGeminiApiKey()) {
+    if (!apiKeyFetched) {
       toast({
-        title: "API Key Required",
-        description: "Please enter a Gemini API key to generate questions.",
+        title: "API Key Not Available",
+        description: "Unable to fetch the Gemini API key. Please try again later.",
         variant: "destructive"
       });
-      setShowApiKeyInput(true);
       return;
     }
     
     navigate('/test', { state: { topic: selectedTopic, difficulty: selectedDifficulty } });
-  };
-
-  const saveApiKey = () => {
-    if (!geminiApiKey.trim()) {
-      toast({
-        title: "Invalid API Key",
-        description: "Please enter a valid Gemini API key.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    setGeminiApiKey(geminiApiKey.trim());
-    setShowApiKeyInput(false);
-    toast({
-      title: "API Key Saved",
-      description: "Your Gemini API key has been saved for this session.",
-    });
   };
 
   return (
@@ -168,29 +157,10 @@ const PracticeSection = () => {
                   </div>
                 </div>
 
-                {showApiKeyInput && (
-                  <div className="mb-6 p-4 border rounded-lg bg-gray-50">
-                    <h3 className="text-md font-medium mb-3">Gemini API Key</h3>
-                    <p className="text-sm text-gray-600 mb-3">
-                      Enter your Gemini API key to generate AI-powered practice questions.
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="password"
-                        placeholder="Enter your Gemini API key"
-                        value={geminiApiKey}
-                        onChange={(e) => setGeminiKeyState(e.target.value)}
-                        className="flex-1"
-                      />
-                      <Button onClick={saveApiKey}>Save</Button>
-                    </div>
-                  </div>
-                )}
-
                 <div className="mt-6">
                   <Button 
                     onClick={startTest}
-                    disabled={!selectedTopic || !selectedDifficulty}
+                    disabled={!selectedTopic || !selectedDifficulty || !apiKeyFetched}
                     className="w-full bg-tutor-blue hover:bg-tutor-dark-blue"
                   >
                     Start Practice Test
@@ -200,6 +170,12 @@ const PracticeSection = () => {
                   {(!selectedTopic || !selectedDifficulty) && (
                     <p className="text-sm text-gray-500 mt-2 text-center">
                       Please select both a topic and difficulty level to begin
+                    </p>
+                  )}
+                  
+                  {!apiKeyFetched && (
+                    <p className="text-sm text-amber-600 mt-2 text-center">
+                      Connecting to AI service...
                     </p>
                   )}
                 </div>
