@@ -56,6 +56,7 @@ export const generateMathQuestions = async (
         },
       }),
     });
+    console.log("API response status:", response.status);
 
     if (!response.ok) {
       const errorText = await response.text();
