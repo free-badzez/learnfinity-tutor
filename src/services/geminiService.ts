@@ -1,3 +1,4 @@
+
 // This service handles the interaction with Google's Gemini API
 
 interface QuestionResponse {
@@ -5,6 +6,33 @@ interface QuestionResponse {
   answer: string;
   explanation: string;
 }
+
+// Local storage key for Gemini API key
+const GEMINI_API_KEY_STORAGE_KEY = 'gemini_api_key';
+
+// Check if Gemini API key exists
+export const hasGeminiApiKey = (): boolean => {
+  // If we're using localStorage, check if the key exists
+  if (typeof window !== 'undefined' && window.localStorage) {
+    return !!localStorage.getItem(GEMINI_API_KEY_STORAGE_KEY);
+  }
+  return false;
+};
+
+// Get Gemini API key from local storage
+export const getGeminiApiKey = (): string | null => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    return localStorage.getItem(GEMINI_API_KEY_STORAGE_KEY);
+  }
+  return null;
+};
+
+// Set Gemini API key in local storage
+export const setGeminiApiKey = (apiKey: string): void => {
+  if (typeof window !== 'undefined' && window.localStorage) {
+    localStorage.setItem(GEMINI_API_KEY_STORAGE_KEY, apiKey);
+  }
+};
 
 // Function to ask a question to Gemini
 export const askGemini = async (question: string): Promise<string> => {
