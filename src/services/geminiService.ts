@@ -43,7 +43,8 @@ export const askGemini = async (question: string): Promise<string> => {
     
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
-    const { data, error } = await supabase.functions.invoke('ask-gemini', {
+    // Call your new edge function
+    const { data, error } = await supabase.functions.invoke('your-function-name', {
       body: { question }
     });
     
