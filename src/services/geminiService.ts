@@ -32,12 +32,6 @@ export const hasGeminiApiKey = () => {
 
 // Function to ask a question to Gemini
 export const askGemini = async (question: string): Promise<string> => {
-  const key = getGeminiApiKey();
-  
-  if (!key) {
-    throw new Error("API key not configured");
-  }
-  
   try {
     // Use Supabase Edge Function to call Gemini API
     const { createClient } = await import('@supabase/supabase-js');
@@ -49,7 +43,7 @@ export const askGemini = async (question: string): Promise<string> => {
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
     const { data, error } = await supabase.functions.invoke('ask-gemini', {
-      body: { question, apiKey: key }
+      body: { question }
     });
     
     if (error) {
