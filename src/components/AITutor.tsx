@@ -19,8 +19,7 @@ const AITutor = () => {
   ]);
   const [isTyping, setIsTyping] = useState(false);
   const [expandedView, setExpandedView] = useState(false);
-  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
-  const [apiKeyInput, setApiKeyInput] = useState("");
+  const [isError, setIsError] = useState(false);
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
   
@@ -46,7 +45,7 @@ const AITutor = () => {
   useEffect(() => {
     // Check if API key is already stored
     if (!hasGeminiApiKey()) {
-      setShowApiKeyInput(true);
+      // setShowApiKeyInput(true);
       toast({
         title: "API Key Required",
         description: "Please enter your Gemini API key to use the AI tutor.",
@@ -61,24 +60,6 @@ const AITutor = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUserInput(e.target.value);
-  };
-
-  const handleApiKeySave = () => {
-    if (!apiKeyInput.trim()) {
-      toast({
-        title: "Invalid API Key",
-        description: "Please enter a valid Gemini API key",
-        variant: "destructive",
-      });
-      return;
-    }
-
-    setGeminiApiKey(apiKeyInput.trim());
-    setShowApiKeyInput(false);
-    toast({
-      title: "API Key Saved",
-      description: "Your Gemini API key has been saved successfully",
-    });
   };
 
   const handleSendMessage = async () => {
@@ -97,18 +78,7 @@ const AITutor = () => {
     setConversation(newConversation);
     setUserInput("");
     setIsTyping(true);
-    
-    // Check if API key is set
-    if (!hasGeminiApiKey()) {
-      setIsTyping(false);
-      setShowApiKeyInput(true);
-      toast({
-        title: "API Key Required",
-        description: "Please enter your Gemini API key to use the AI tutor.",
-        variant: "destructive",
-      });
-      return;
-    }
+    setIsError(false);
     
     try {
       // Get response from Gemini API
@@ -124,6 +94,7 @@ const AITutor = () => {
       ]);
     } catch (error) {
       console.error("Error getting response:", error);
+      setIsError(true);
       
       toast({
         title: "Error",
@@ -135,7 +106,7 @@ const AITutor = () => {
         ...newConversation,
         {
           role: "assistant",
-          content: "I'm sorry, I encountered an error while processing your request. Please try again later.",
+          content: "I'm sorry, I encountered an error while processing your request. Please check if the Gemini API key is configured correctly in Supabase Edge Function secrets.",
           timestamp: new Date()
         }
       ]);
@@ -171,16 +142,6 @@ const AITutor = () => {
           </div>
           
           <div className="mt-4 md:mt-0 flex gap-2">
-            {!hasGeminiApiKey() && (
-              <Button 
-                variant="outline" 
-                onClick={() => setShowApiKeyInput(true)}
-                className="border-red-500 text-red-500 hover:bg-red-50"
-              >
-                <Key className="h-4 w-4 mr-2" />
-                Set API Key
-              </Button>
-            )}
             <Button 
               variant="outline" 
               onClick={() => setExpandedView(!expandedView)}
@@ -200,35 +161,6 @@ const AITutor = () => {
             </Button>
           </div>
         </div>
-
-        {/* API Key Input Dialog */}
-        {showApiKeyInput && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
-              <div className="flex justify-between items-center mb-4">
-                <h2 className="text-xl font-semibold">Enter Gemini API Key</h2>
-                <button onClick={() => setShowApiKeyInput(false)} className="text-gray-500 hover:text-gray-700">
-                  <X className="h-5 w-5" />
-                </button>
-              </div>
-              <p className="text-gray-600 mb-4">Your API key will be stored locally and used to power the AI tutor.</p>
-              <Input
-                type="password"
-                value={apiKeyInput}
-                onChange={(e) => setApiKeyInput(e.target.value)}
-                placeholder="Enter your Gemini API key"
-                className="mb-4"
-              />
-              <div className="flex justify-between">
-                <Button variant="outline" onClick={() => setShowApiKeyInput(false)}>Cancel</Button>
-                <Button onClick={handleApiKeySave}>Save API Key</Button>
-              </div>
-              <div className="mt-4 text-sm text-gray-500">
-                <p>Don't have an API key? <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Get one here</a></p>
-              </div>
-            </div>
-          </div>
-        )}
 
         <div className={`grid ${expandedView ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-4'} gap-8`}>
           {/* Sidebar - only shown in compact view */}
@@ -409,6 +341,10 @@ const AITutor = () => {
                     <span className="sr-only">Send</span>
                   </Button>
                 </div>
+                
+                {isError && (
+                  <p className="text-xs text-red-500 mt-2 text-center">There was an issue connecting to the AI. Please check if the Gemini API key is configured correctly.</p>
+                )}
                 
                 <p className="text-xs text-gray-500 mt-2 text-center">The AI tutor can explain concepts, solve problems, and provide practice exercises.</p>
               </div>
