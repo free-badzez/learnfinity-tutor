@@ -21,7 +21,7 @@ serve(async (req) => {
 
     const apiKey = Deno.env.get("GEMINI_API_KEY");
     if (!apiKey) {
-      throw new Error('API key not configured');
+      throw new Error('API key not configured on the server');
     }
 
     console.log(`Processing question: ${question}`);

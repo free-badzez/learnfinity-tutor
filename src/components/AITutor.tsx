@@ -123,6 +123,8 @@ const AITutor = () => {
         }
       ]);
     } catch (error) {
+      console.error("Error getting response:", error);
+      
       toast({
         title: "Error",
         description: error instanceof Error ? error.message : "Failed to get response from Gemini",

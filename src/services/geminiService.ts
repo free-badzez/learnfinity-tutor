@@ -1,3 +1,4 @@
+
 // This service handles the interaction with Google's Gemini API
 
 interface QuestionResponse {
@@ -47,7 +48,12 @@ export const askGemini = async (question: string): Promise<string> => {
     });
     
     if (error) {
+      console.error("Edge function error:", error);
       throw new Error(error.message);
+    }
+    
+    if (!data || !data.answer) {
+      throw new Error("No answer received from AI");
     }
     
     return data.answer;
