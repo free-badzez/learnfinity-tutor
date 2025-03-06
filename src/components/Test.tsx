@@ -1,12 +1,11 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Check, X, ArrowLeft, ArrowRight, Clock, Calculator } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { generateMathQuestions } from '@/services/geminiService'; // Removed fetchGeminiApiKey
+import { generateMathQuestions } from '@/services/geminiService';
 import { toast } from "@/hooks/use-toast";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import { Label } from "@/components/ui/label";
 
 const Test = () => {
   const location = useLocation();
@@ -75,8 +74,6 @@ const Test = () => {
     const fetchQuestions = async () => {
       try {
         setLoading(true);
-        
-        // Fetch questions directly (no need to fetch API key)
         const fetchedQuestions = await generateMathQuestions(topic, difficulty, questionCount);
         setQuestions(fetchedQuestions);
       } catch (error) {
@@ -94,9 +91,9 @@ const Test = () => {
     fetchQuestions();
   }, [topic, difficulty, navigate]);
 
-  const handleAnswerChange = (value) => {
+  const handleAnswerChange = (e) => {
     const newAnswers = { ...answers };
-    newAnswers[currentQuestionIndex] = value;
+    newAnswers[currentQuestionIndex] = e.target.value;
     setAnswers(newAnswers);
   };
 
@@ -121,7 +118,7 @@ const Test = () => {
     // Calculate score
     let correctCount = 0;
     questions.forEach((question, index) => {
-      if (answers[index] && answers[index].trim() === question.answer.trim()) {
+      if (answers[index] && answers[index].trim().toLowerCase() === question.answer.trim().toLowerCase()) {
         correctCount++;
       }
     });
@@ -170,9 +167,6 @@ const Test = () => {
       </div>
     );
   }
-
-  // Get current question
-  const currentQuestion = questions[currentQuestionIndex];
 
   return (
     <div className="min-h-screen pt-16 bg-gray-50">
@@ -228,7 +222,7 @@ const Test = () => {
                           ? 'bg-tutor-blue text-white' 
                           : answers[index] 
                             ? isSubmitted 
-                              ? answers[index].trim() === questions[index].answer.trim()
+                              ? answers[index].trim().toLowerCase() === questions[index].answer.trim().toLowerCase()
                                 ? 'bg-green-100 border border-green-300'
                                 : 'bg-red-100 border border-red-300'
                               : 'bg-tutor-light-blue/50 border border-tutor-light-blue'
@@ -263,7 +257,7 @@ const Test = () => {
                             ? 'bg-tutor-blue text-white' 
                             : answers[index] 
                               ? isSubmitted 
-                                ? answers[index].trim() === questions[index].answer.trim()
+                                ? answers[index].trim().toLowerCase() === questions[index].answer.trim().toLowerCase()
                                   ? 'bg-green-100 border border-green-300'
                                   : 'bg-red-100 border border-red-300'
                                 : 'bg-tutor-light-blue/50 border border-tutor-light-blue'
@@ -280,76 +274,44 @@ const Test = () => {
               <CardContent className="pt-4">
                 <div className="mb-6">
                   <p className="text-lg font-medium mb-6">
-                    {currentQuestion?.question}
+                    {questions[currentQuestionIndex]?.question}
                   </p>
                   
-                  {currentQuestion?.options ? (
-                    <div className="mb-4 space-y-3">
-                      <RadioGroup 
-                        value={answers[currentQuestionIndex] || ""}
-                        onValueChange={handleAnswerChange}
-                        disabled={isSubmitted}
-                      >
-                        {currentQuestion.options.map((option, idx) => (
-                          <div key={idx} className={`flex items-center space-x-2 p-2 rounded-md ${
-                            isSubmitted && option === currentQuestion.answer ? 'bg-green-50' : ''
-                          }`}>
-                            <RadioGroupItem 
-                              value={option} 
-                              id={`option-${idx}`} 
-                              disabled={isSubmitted}
-                            />
-                            <Label 
-                              htmlFor={`option-${idx}`}
-                              className={`${
-                                isSubmitted && option === currentQuestion.answer 
-                                  ? 'font-medium text-green-700' 
-                                  : ''
-                              }`}
-                            >
-                              {option}
-                            </Label>
-                          </div>
-                        ))}
-                      </RadioGroup>
-                    </div>
-                  ) : (
-                    <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-1">
-                        Your Answer:
-                      </label>
-                      <input
-                        type="text"
-                        className="w-full p-2 border rounded-md"
-                        value={answers[currentQuestionIndex] || ''}
-                        onChange={(e) => handleAnswerChange(e.target.value)}
-                        disabled={isSubmitted}
-                        placeholder="Type your answer here..."
-                      />
-                    </div>
-                  )}
+                  <div className="mb-4">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
+                      Your Answer:
+                    </label>
+                    <input
+                      type="text"
+                      className="w-full p-2 border rounded-md"
+                      value={answers[currentQuestionIndex] || ''}
+                      onChange={handleAnswerChange}
+                      disabled={isSubmitted}
+                      placeholder="Type your answer here..."
+                    />
+                  </div>
                   
                   {isSubmitted && (
                     <div className="mt-4 p-3 rounded-md border">
                       <div className="flex items-start">
                         <div className={`rounded-full p-1 mr-2 ${
-                          answers[currentQuestionIndex]?.trim() === 
-                          currentQuestion?.answer.trim()
+                          answers[currentQuestionIndex]?.trim().toLowerCase() === 
+                          questions[currentQuestionIndex]?.answer.trim().toLowerCase()
                             ? 'bg-green-100' : 'bg-red-100'
                         }`}>
-                          {answers[currentQuestionIndex]?.trim() === 
-                           currentQuestion?.answer.trim() 
+                          {answers[currentQuestionIndex]?.trim().toLowerCase() === 
+                           questions[currentQuestionIndex]?.answer.trim().toLowerCase() 
                             ? <Check className="h-4 w-4 text-green-600" /> 
                             : <X className="h-4 w-4 text-red-600" />}
                         </div>
                         <div>
                           <p className="font-medium">
-                            Correct Answer: {currentQuestion?.answer}
+                            Correct Answer: {questions[currentQuestionIndex]?.answer}
                           </p>
                           {showExplanation && (
                             <div className="mt-2 text-sm text-gray-700">
                               <p className="font-medium mb-1">Explanation:</p>
-                              <p className="whitespace-pre-line">{currentQuestion?.explanation}</p>
+                              <p>{questions[currentQuestionIndex]?.explanation}</p>
                             </div>
                           )}
                         </div>
