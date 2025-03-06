@@ -7,12 +7,12 @@ interface QuestionResponse {
   explanation: string;
 }
 
-// Local storage key for Gemini API key
+// Local storage key for Gemini API key (for UI state only)
 const GEMINI_API_KEY_STORAGE_KEY = 'gemini_api_key';
 
-// Check if Gemini API key exists
+// Check if Gemini API key exists in local storage
 export const hasGeminiApiKey = (): boolean => {
-  // If we're using localStorage, check if the key exists
+  // This function is kept for UI state purposes
   if (typeof window !== 'undefined' && window.localStorage) {
     return !!localStorage.getItem(GEMINI_API_KEY_STORAGE_KEY);
   }
@@ -21,6 +21,7 @@ export const hasGeminiApiKey = (): boolean => {
 
 // Get Gemini API key from local storage
 export const getGeminiApiKey = (): string | null => {
+  // This function is kept for UI state purposes
   if (typeof window !== 'undefined' && window.localStorage) {
     return localStorage.getItem(GEMINI_API_KEY_STORAGE_KEY);
   }
@@ -29,6 +30,7 @@ export const getGeminiApiKey = (): string | null => {
 
 // Set Gemini API key in local storage
 export const setGeminiApiKey = (apiKey: string): void => {
+  // This function is kept for UI state purposes
   if (typeof window !== 'undefined' && window.localStorage) {
     localStorage.setItem(GEMINI_API_KEY_STORAGE_KEY, apiKey);
   }
@@ -46,8 +48,8 @@ export const askGemini = async (question: string): Promise<string> => {
     
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
     
-    // Call the edge function
-    const { data, error } = await supabase.functions.invoke('your-function-name', {
+    // Call the edge function with the correct name
+    const { data, error } = await supabase.functions.invoke('ask-gemini', {
       body: { question }
     });
     
