@@ -1,11 +1,12 @@
-
 import React, { useState, useRef, useEffect } from 'react';
-import { Brain, Send, Lightbulb, Calculator, ArrowRight, Sigma, BookOpen, RefreshCw, Maximize2, Minimize2, PlusCircle, X, MessageSquare } from 'lucide-react';
+import { Brain, Send, Lightbulb, Calculator, ArrowRight, Sigma, BookOpen, RefreshCw, Maximize2, Minimize2, PlusCircle, X, MessageSquare, Key } from 'lucide-react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { useToast } from "@/hooks/use-toast";
+import { askGemini, setGeminiApiKey, getGeminiApiKey, hasGeminiApiKey } from '@/services/geminiService';
 
 const AITutor = () => {
   const [userInput, setUserInput] = useState("");
@@ -18,7 +19,10 @@ const AITutor = () => {
   ]);
   const [isTyping, setIsTyping] = useState(false);
   const [expandedView, setExpandedView] = useState(false);
+  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
+  const [apiKeyInput, setApiKeyInput] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const { toast } = useToast();
   
   // Sample suggested questions
   const suggestedQuestions = [
@@ -39,6 +43,18 @@ const AITutor = () => {
     scrollToBottom();
   }, [conversation]);
 
+  useEffect(() => {
+    // Check if API key is already stored
+    if (!hasGeminiApiKey()) {
+      setShowApiKeyInput(true);
+      toast({
+        title: "API Key Required",
+        description: "Please enter your Gemini API key to use the AI tutor.",
+        variant: "destructive",
+      });
+    }
+  }, []);
+
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   };
@@ -47,7 +63,25 @@ const AITutor = () => {
     setUserInput(e.target.value);
   };
 
-  const handleSendMessage = () => {
+  const handleApiKeySave = () => {
+    if (!apiKeyInput.trim()) {
+      toast({
+        title: "Invalid API Key",
+        description: "Please enter a valid Gemini API key",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    setGeminiApiKey(apiKeyInput.trim());
+    setShowApiKeyInput(false);
+    toast({
+      title: "API Key Saved",
+      description: "Your Gemini API key has been saved successfully",
+    });
+  };
+
+  const handleSendMessage = async () => {
     if (userInput.trim() === "") return;
     
     // Add user message to conversation
@@ -64,22 +98,21 @@ const AITutor = () => {
     setUserInput("");
     setIsTyping(true);
     
-    // Simulate AI response (with delay to mimic thinking)
-    setTimeout(() => {
-      let response;
-      
-      // Very simple pattern matching to generate relevant responses
-      if (userInput.toLowerCase().includes("quadratic")) {
-        response = "A quadratic equation has the form ax² + bx + c = 0, where a, b, and c are constants and a ≠ 0. You can solve it using the quadratic formula: x = (-b ± √(b² - 4ac)) / 2a. Would you like me to demonstrate with an example?";
-      } else if (userInput.toLowerCase().includes("chain rule")) {
-        response = "The chain rule is a formula for computing the derivative of a composite function. If y = f(g(x)), then dy/dx = (df/dg) × (dg/dx). This rule is essential when dealing with nested functions. Would you like to see an example?";
-      } else if (userInput.toLowerCase().includes("pythagorean")) {
-        response = "The Pythagorean theorem states that in a right triangle, the square of the length of the hypotenuse equals the sum of the squares of the other two sides. If the two legs have lengths a and b, and the hypotenuse has length c, then a² + b² = c². This fundamental theorem has many applications in mathematics and real life.";
-      } else if (userInput.toLowerCase().includes("derivative") && userInput.toLowerCase().includes("sin")) {
-        response = "The derivative of sin(x) is cos(x). This comes from applying the limit definition of the derivative and using the properties of trigonometric functions. Would you like me to show you the proof or some examples?";
-      } else {
-        response = "That's a great question! I'd be happy to help you understand this concept better. Let's break it down step by step. What specific aspect of this would you like me to clarify?";
-      }
+    // Check if API key is set
+    if (!hasGeminiApiKey()) {
+      setIsTyping(false);
+      setShowApiKeyInput(true);
+      toast({
+        title: "API Key Required",
+        description: "Please enter your Gemini API key to use the AI tutor.",
+        variant: "destructive",
+      });
+      return;
+    }
+    
+    try {
+      // Get response from Gemini API
+      const response = await askGemini(userInput);
       
       setConversation([
         ...newConversation,
@@ -89,9 +122,24 @@ const AITutor = () => {
           timestamp: new Date()
         }
       ]);
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: error instanceof Error ? error.message : "Failed to get response from Gemini",
+        variant: "destructive",
+      });
       
+      setConversation([
+        ...newConversation,
+        {
+          role: "assistant",
+          content: "I'm sorry, I encountered an error while processing your request. Please try again later.",
+          timestamp: new Date()
+        }
+      ]);
+    } finally {
       setIsTyping(false);
-    }, 1500);
+    }
   };
 
   const handleKeyPress = (e: React.KeyboardEvent<HTMLInputElement>) => {
@@ -120,7 +168,17 @@ const AITutor = () => {
             <p className="text-gray-600 mt-1">Your personal mathematics learning assistant</p>
           </div>
           
-          <div className="mt-4 md:mt-0">
+          <div className="mt-4 md:mt-0 flex gap-2">
+            {!hasGeminiApiKey() && (
+              <Button 
+                variant="outline" 
+                onClick={() => setShowApiKeyInput(true)}
+                className="border-red-500 text-red-500 hover:bg-red-50"
+              >
+                <Key className="h-4 w-4 mr-2" />
+                Set API Key
+              </Button>
+            )}
             <Button 
               variant="outline" 
               onClick={() => setExpandedView(!expandedView)}
@@ -140,6 +198,35 @@ const AITutor = () => {
             </Button>
           </div>
         </div>
+
+        {/* API Key Input Dialog */}
+        {showApiKeyInput && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white p-6 rounded-lg shadow-lg max-w-md w-full">
+              <div className="flex justify-between items-center mb-4">
+                <h2 className="text-xl font-semibold">Enter Gemini API Key</h2>
+                <button onClick={() => setShowApiKeyInput(false)} className="text-gray-500 hover:text-gray-700">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
+              <p className="text-gray-600 mb-4">Your API key will be stored locally and used to power the AI tutor.</p>
+              <Input
+                type="password"
+                value={apiKeyInput}
+                onChange={(e) => setApiKeyInput(e.target.value)}
+                placeholder="Enter your Gemini API key"
+                className="mb-4"
+              />
+              <div className="flex justify-between">
+                <Button variant="outline" onClick={() => setShowApiKeyInput(false)}>Cancel</Button>
+                <Button onClick={handleApiKeySave}>Save API Key</Button>
+              </div>
+              <div className="mt-4 text-sm text-gray-500">
+                <p>Don't have an API key? <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">Get one here</a></p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className={`grid ${expandedView ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-4'} gap-8`}>
           {/* Sidebar - only shown in compact view */}
@@ -313,7 +400,7 @@ const AITutor = () => {
                   />
                   <Button 
                     onClick={handleSendMessage} 
-                    disabled={userInput.trim() === ""}
+                    disabled={userInput.trim() === "" || isTyping}
                     className="rounded-full bg-tutor-blue hover:bg-tutor-dark-blue text-white px-4"
                   >
                     <Send className="h-4 w-4" />

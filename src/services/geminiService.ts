@@ -1,4 +1,3 @@
-
 // This service handles the interaction with Google's Gemini API
 
 interface QuestionResponse {
@@ -13,11 +12,55 @@ let apiKey = "";
 // Function to set the API key
 export const setGeminiApiKey = (key: string) => {
   apiKey = key;
+  // Store the API key in local storage for persistence
+  localStorage.setItem("gemini_api_key", key);
+};
+
+// Function to get the API key
+export const getGeminiApiKey = () => {
+  if (!apiKey) {
+    // Try to get from localStorage if not already set
+    apiKey = localStorage.getItem("gemini_api_key") || "";
+  }
+  return apiKey;
 };
 
 // Function to check if API key is set
 export const hasGeminiApiKey = () => {
-  return !!apiKey;
+  return !!getGeminiApiKey();
+};
+
+// Function to ask a question to Gemini
+export const askGemini = async (question: string): Promise<string> => {
+  const key = getGeminiApiKey();
+  
+  if (!key) {
+    throw new Error("API key not configured");
+  }
+  
+  try {
+    // Use Supabase Edge Function to call Gemini API
+    const { createClient } = await import('@supabase/supabase-js');
+    
+    // Get Supabase URL and anon key from environment variables
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ahaupfnvqfhchptxbddl.supabase.co';
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFoYXVwZm52cWZoY2hwdHhiZGRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTQ2NTcxMzcsImV4cCI6MjAzMDIzMzEzN30.Vxwgq1EYiF3kgm-e4RZ8TfARfOgOlJOKJJMCCYQ47RY';
+    
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    
+    const { data, error } = await supabase.functions.invoke('ask-gemini', {
+      body: { question, apiKey: key }
+    });
+    
+    if (error) {
+      throw new Error(error.message);
+    }
+    
+    return data.answer;
+  } catch (error) {
+    console.error("Error asking Gemini:", error);
+    throw error;
+  }
 };
 
 export const generateMathQuestions = async (
