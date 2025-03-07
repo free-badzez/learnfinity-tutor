@@ -1,4 +1,3 @@
-
 // This service handles the interaction with Google's Gemini API
 
 interface QuestionResponse {
@@ -43,10 +42,12 @@ export const askGemini = async (question: string): Promise<string> => {
     const { createClient } = await import('@supabase/supabase-js');
     
     // Get Supabase URL and anon key from environment variables
-    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ahaupfnvqfhchptxbddl.supabase.co';
-    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFoYXVwZm52cWZoY2hwdHhiZGRsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3MTQ2NTcxMzcsImV4cCI6MjAzMDIzMzEzN30.Vxwgq1EYiF3kgm-e4RZ8TfARfOgOlJOKJJMCCYQ47RY';
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ukedswaxpldombgjilvl.supabase.co';
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrZWRzd2F4cGxkb21iZ2ppbHZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEyNjk5OTksImV4cCI6MjA1Njg0NTk5OX0.J1S8icZKmQwYQkcVOFYqTJSP7x0n0mGV-GIdJJVZwXY';
     
     const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    
+    console.log("Calling ask-gemini edge function with question:", question);
     
     // Call the edge function with the correct name
     const { data, error } = await supabase.functions.invoke('ask-gemini', {
@@ -55,13 +56,14 @@ export const askGemini = async (question: string): Promise<string> => {
     
     if (error) {
       console.error("Edge function error:", error);
-      throw new Error(error.message);
+      throw new Error(error.message || "Failed to get response from edge function");
     }
     
     if (!data || !data.answer) {
       throw new Error("No answer received from AI");
     }
     
+    console.log("Received answer from Gemini");
     return data.answer;
   } catch (error) {
     console.error("Error asking Gemini:", error);

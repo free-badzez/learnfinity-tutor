@@ -23,6 +23,9 @@ serve(async (req) => {
       throw new Error('GEMINI_API_KEY is not set in the environment variables');
     }
 
+    // Create a system prompt focused on math tutoring
+    const mathTutoringPrompt = `You are a helpful, friendly mathematics tutor. Your goal is to help students understand math concepts clearly and develop problem-solving skills. Explain math concepts in a step-by-step manner using clear examples. The student asks: ${question}`;
+
     // Call Gemini API
     const response = await fetch(
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + geminiApiKey,
@@ -35,14 +38,14 @@ serve(async (req) => {
           contents: [
             {
               role: 'user',
-              parts: [{ text: question }],
+              parts: [{ text: mathTutoringPrompt }],
             },
           ],
           generationConfig: {
-            temperature: 0.7,
-            topK: 40,
+            temperature: 0.4, // Lower temperature for more focused, educational responses
+            topK: 32,
             topP: 0.95,
-            maxOutputTokens: 1024,
+            maxOutputTokens: 2048, // Increased for more comprehensive explanations
           },
         }),
       }
@@ -55,7 +58,7 @@ serve(async (req) => {
     }
 
     const data = await response.json();
-    console.log("Gemini API response:", JSON.stringify(data, null, 2));
+    console.log("Gemini API response received");
 
     // Extract the answer from the response
     const answer = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response from Gemini';
