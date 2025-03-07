@@ -26,9 +26,10 @@ serve(async (req) => {
     // Create a system prompt focused on math tutoring
     const mathTutoringPrompt = `You are a helpful, friendly mathematics tutor. Your goal is to help students understand math concepts clearly and develop problem-solving skills. Explain math concepts in a step-by-step manner using clear examples. The student asks: ${question}`;
 
-    // Call Gemini API
+    // Call Gemini API with updated endpoint and model name
+    // Using correct model format "gemini-1.5-pro" instead of "gemini-pro"
     const response = await fetch(
-      'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent?key=' + geminiApiKey,
+      `https://generativelanguage.googleapis.com/v1/models/gemini-1.5-pro:generateContent?key=${geminiApiKey}`,
       {
         method: 'POST',
         headers: {
@@ -37,15 +38,14 @@ serve(async (req) => {
         body: JSON.stringify({
           contents: [
             {
-              role: 'user',
               parts: [{ text: mathTutoringPrompt }],
             },
           ],
           generationConfig: {
-            temperature: 0.4, // Lower temperature for more focused, educational responses
+            temperature: 0.4,
             topK: 32,
             topP: 0.95,
-            maxOutputTokens: 2048, // Increased for more comprehensive explanations
+            maxOutputTokens: 2048,
           },
         }),
       }
@@ -61,6 +61,7 @@ serve(async (req) => {
     console.log("Gemini API response received");
 
     // Extract the answer from the response
+    // Updated path to match the current Gemini API response format
     const answer = data.candidates?.[0]?.content?.parts?.[0]?.text || 'No response from Gemini';
 
     return new Response(
