@@ -1,4 +1,3 @@
-
 import React, { useEffect, useRef } from 'react';
 import { ArrowRight, Brain, Sparkles, Gauge, Calculator, BarChart2 } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -23,7 +22,7 @@ const Hero = () => {
         <div className="absolute top-0 left-1/3 w-full h-full bg-gradient-to-br from-tutor-light-blue/30 via-transparent to-transparent rounded-full blur-3xl"></div>
       </div>
       
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 h-screen flex items-center">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 md:py-24 py-[94px]">
         <div className="flex flex-col lg:flex-row items-center">
           <div className="lg:w-1/2 lg:pr-12 mb-10 lg:mb-0">
             <div className="inline-flex items-center px-3 py-1 rounded-full bg-tutor-light-blue text-tutor-blue text-xs font-medium mb-4 animate-on-load opacity-0 transform translate-y-4 transition-all duration-500" style={{
