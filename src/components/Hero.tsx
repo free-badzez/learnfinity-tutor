@@ -106,7 +106,7 @@ const Hero = () => {
         </div>
       </div>
       
-      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-12">
+      <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-[169px]">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8 animate-on-load opacity-0 transform translate-y-4 transition-all duration-500" style={{
         transitionDelay: '600ms'
       }}>
