@@ -1,11 +1,14 @@
 
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import { Check, X, ArrowLeft, ArrowRight, Clock, Calculator } from 'lucide-react';
+import { Check, X, ArrowLeft, ArrowRight, Clock, Calculator, AlertCircle, Award, BarChart } from 'lucide-react';
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { generateMathQuestions } from '@/services/geminiService';
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { generateMathQuestions, analyzeTestResults } from '@/services/geminiService';
 import { toast } from "@/hooks/use-toast";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 
 const Test = () => {
   const location = useLocation();
@@ -22,6 +25,8 @@ const Test = () => {
   const [showCalculator, setShowCalculator] = useState(false);
   const [calculatorInput, setCalculatorInput] = useState('');
   const [calculatorResult, setCalculatorResult] = useState('');
+  const [analysis, setAnalysis] = useState(null);
+  const [showResults, setShowResults] = useState(false);
 
   // Set time based on difficulty
   useEffect(() => {
@@ -91,9 +96,9 @@ const Test = () => {
     fetchQuestions();
   }, [topic, difficulty, navigate]);
 
-  const handleAnswerChange = (e) => {
+  const handleAnswerChange = (value) => {
     const newAnswers = { ...answers };
-    newAnswers[currentQuestionIndex] = e.target.value;
+    newAnswers[currentQuestionIndex] = value;
     setAnswers(newAnswers);
   };
 
@@ -111,24 +116,49 @@ const Test = () => {
     }
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     setIsSubmitted(true);
     setShowExplanation(true);
     
-    // Calculate score
-    let correctCount = 0;
-    questions.forEach((question, index) => {
-      if (answers[index] && answers[index].trim().toLowerCase() === question.answer.trim().toLowerCase()) {
-        correctCount++;
-      }
-    });
-    
-    const percentage = Math.round((correctCount / questions.length) * 100);
-    
-    toast({
-      title: "Test Completed!",
-      description: `You scored ${correctCount}/${questions.length} (${percentage}%)`,
-    });
+    try {
+      // Calculate score
+      let correctCount = 0;
+      questions.forEach((question, index) => {
+        if (answers[index] && answers[index].trim().toLowerCase() === question.answer.trim().toLowerCase()) {
+          correctCount++;
+        }
+      });
+      
+      const percentage = Math.round((correctCount / questions.length) * 100);
+      
+      toast({
+        title: "Test Completed!",
+        description: `You scored ${correctCount}/${questions.length} (${percentage}%)`,
+      });
+      
+      // Get AI analysis of results
+      const resultsAnalysis = await analyzeTestResults(topic, questions, answers);
+      setAnalysis(resultsAnalysis);
+      
+      // Show results summary
+      setShowResults(true);
+    } catch (error) {
+      console.error('Error analyzing results:', error);
+      toast({
+        title: "Analysis Error",
+        description: "There was a problem analyzing your results.",
+        variant: "destructive"
+      });
+    }
+  };
+
+  const handleBackToResults = () => {
+    setShowResults(true);
+    setCurrentQuestionIndex(0);
+  };
+
+  const handleReviewQuestions = () => {
+    setShowResults(false);
   };
 
   // Calculator functions
@@ -168,6 +198,94 @@ const Test = () => {
     );
   }
 
+  // Show results summary
+  if (showResults && isSubmitted && analysis) {
+    return (
+      <div className="min-h-screen pt-16 bg-gray-50">
+        <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
+          <div className="flex items-center justify-between mb-6">
+            <Button 
+              variant="outline" 
+              className="flex items-center" 
+              onClick={() => navigate('/practice')}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Practice
+            </Button>
+          </div>
+          
+          <div className="mb-6">
+            <h1 className="text-2xl font-bold">Test Results: {topic} - {difficulty} Level</h1>
+            <p className="text-gray-600">
+              {questions.length} questions • Time: {formatTime(timeLeft)} remaining
+            </p>
+          </div>
+          
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-8">
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center">
+                  <Award className="h-5 w-5 mr-2 text-tutor-blue" />
+                  Score
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <div className="text-4xl font-bold text-center mb-2">
+                  {analysis.score}/{questions.length}
+                </div>
+                <Progress value={analysis.accuracy} className="h-2 mb-2" />
+                <p className="text-center text-gray-600">{analysis.accuracy}% Accuracy</p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center">
+                  <AlertCircle className="h-5 w-5 mr-2 text-amber-500" />
+                  Areas to Improve
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <p>{analysis.weakAreas}</p>
+              </CardContent>
+            </Card>
+            
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center">
+                  <BarChart className="h-5 w-5 mr-2 text-green-600" />
+                  Strengths
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="pt-4">
+                <p>{analysis.strengths}</p>
+              </CardContent>
+            </Card>
+          </div>
+          
+          <div className="flex justify-center gap-4">
+            <Button 
+              variant="outline" 
+              className="flex items-center" 
+              onClick={() => navigate('/practice')}
+            >
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              New Practice Test
+            </Button>
+            
+            <Button 
+              className="flex items-center bg-tutor-blue hover:bg-tutor-dark-blue" 
+              onClick={handleReviewQuestions}
+            >
+              Review Questions
+              <ArrowRight className="h-4 w-4 ml-2" />
+            </Button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen pt-16 bg-gray-50">
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -175,10 +293,10 @@ const Test = () => {
           <Button 
             variant="outline" 
             className="flex items-center" 
-            onClick={() => navigate('/practice')}
+            onClick={() => isSubmitted ? handleBackToResults() : navigate('/practice')}
           >
             <ArrowLeft className="h-4 w-4 mr-2" />
-            Back to Practice
+            {isSubmitted ? 'Back to Results' : 'Back to Practice'}
           </Button>
           
           <div className="flex items-center space-x-4">
@@ -277,22 +395,46 @@ const Test = () => {
                     {questions[currentQuestionIndex]?.question}
                   </p>
                   
-                  <div className="mb-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Your Answer:
-                    </label>
-                    <input
-                      type="text"
-                      className="w-full p-2 border rounded-md"
-                      value={answers[currentQuestionIndex] || ''}
-                      onChange={handleAnswerChange}
-                      disabled={isSubmitted}
-                      placeholder="Type your answer here..."
-                    />
-                  </div>
+                  {questions[currentQuestionIndex]?.options && (
+                    <div className="mb-4">
+                      <RadioGroup 
+                        value={answers[currentQuestionIndex] || ''} 
+                        onValueChange={handleAnswerChange}
+                        disabled={isSubmitted}
+                      >
+                        {questions[currentQuestionIndex].options.map((option, idx) => (
+                          <div 
+                            key={idx} 
+                            className={`flex items-center space-x-2 p-3 rounded-md border mb-2 ${
+                              isSubmitted 
+                                ? option.trim().toLowerCase() === questions[currentQuestionIndex].answer.trim().toLowerCase()
+                                  ? 'bg-green-50 border-green-200'
+                                  : answers[currentQuestionIndex] === option && 'bg-red-50 border-red-200'
+                                : answers[currentQuestionIndex] === option ? 'bg-blue-50 border-blue-200' : ''
+                            }`}
+                          >
+                            <RadioGroupItem value={option} id={`option-${idx}`} />
+                            <Label 
+                              htmlFor={`option-${idx}`}
+                              className={`flex-1 cursor-pointer ${
+                                isSubmitted && option.trim().toLowerCase() === questions[currentQuestionIndex].answer.trim().toLowerCase()
+                                  ? 'font-medium text-green-800'
+                                  : ''
+                              }`}
+                            >
+                              {option}
+                              {isSubmitted && option.trim().toLowerCase() === questions[currentQuestionIndex].answer.trim().toLowerCase() && 
+                                <Check className="inline-block h-4 w-4 ml-2 text-green-600" />
+                              }
+                            </Label>
+                          </div>
+                        ))}
+                      </RadioGroup>
+                    </div>
+                  )}
                   
                   {isSubmitted && (
-                    <div className="mt-4 p-3 rounded-md border">
+                    <div className="mt-4 p-4 rounded-md border bg-gray-50">
                       <div className="flex items-start">
                         <div className={`rounded-full p-1 mr-2 ${
                           answers[currentQuestionIndex]?.trim().toLowerCase() === 
@@ -308,10 +450,12 @@ const Test = () => {
                           <p className="font-medium">
                             Correct Answer: {questions[currentQuestionIndex]?.answer}
                           </p>
-                          {showExplanation && (
-                            <div className="mt-2 text-sm text-gray-700">
-                              <p className="font-medium mb-1">Explanation:</p>
-                              <p>{questions[currentQuestionIndex]?.explanation}</p>
+                          {showExplanation && questions[currentQuestionIndex]?.explanation && (
+                            <div className="mt-3 text-sm text-gray-700 math-response">
+                              <p className="font-medium mb-1 text-tutor-blue">Explanation:</p>
+                              {questions[currentQuestionIndex].explanation.split('\n').map((line, i) => (
+                                <p key={i} className="mb-1">{line}</p>
+                              ))}
                             </div>
                           )}
                         </div>

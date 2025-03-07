@@ -1,9 +1,11 @@
+
 // This service handles the interaction with Google's Gemini API
 
 interface QuestionResponse {
   question: string;
   answer: string;
   explanation: string;
+  options?: string[];
 }
 
 // Local storage key for Gemini API key (for UI state only)
@@ -73,19 +75,110 @@ export const askGemini = async (question: string): Promise<string> => {
 
 export const generateMathQuestions = async (
   topic: string,
-  difficulty: "Easy" | "Medium" | "Hard",
+  difficulty: string,
   count: number = 5
 ): Promise<QuestionResponse[]> => {
   console.log(`Generating ${count} ${difficulty} questions for ${topic}`);
   
-  // Use simulated response since we're focused on the tutor functionality
-  return simulateQuestions(topic, difficulty, count);
+  try {
+    // Use Supabase Edge Function to call Gemini API
+    const { createClient } = await import('@supabase/supabase-js');
+    
+    // Get Supabase URL and anon key from environment variables
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ukedswaxpldombgjilvl.supabase.co';
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrZWRzd2F4cGxkb21iZ2ppbHZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEyNjk5OTksImV4cCI6MjA1Njg0NTk5OX0.J1S8icZKmQwYQkcVOFYqTJSP7x0n0mGV-GIdJJVZwXY';
+    
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    
+    console.log("Calling generate-test-questions edge function");
+    
+    // Call the edge function to generate test questions
+    const { data, error } = await supabase.functions.invoke('generate-test-questions', {
+      body: { topic, difficulty, count }
+    });
+    
+    if (error) {
+      console.error("Edge function error:", error);
+      throw new Error(error.message || "Failed to get response from edge function");
+    }
+    
+    if (!data || !data.questions) {
+      throw new Error("No questions received from AI");
+    }
+    
+    console.log("Received questions from Gemini:", data.questions.length);
+    return data.questions;
+  } catch (error) {
+    console.error("Error generating questions with Gemini:", error);
+    // Fall back to simulated questions if there's an error
+    console.log("Falling back to simulated questions");
+    return simulateQuestions(topic, difficulty, count);
+  }
+};
+
+// Analyze test results and provide feedback
+export const analyzeTestResults = async (
+  topic: string,
+  questions: QuestionResponse[],
+  userAnswers: Record<number, string>
+): Promise<{ score: number, accuracy: number, weakAreas: string, strengths: string }> => {
+  try {
+    // Use Supabase Edge Function to call Gemini API
+    const { createClient } = await import('@supabase/supabase-js');
+    
+    // Get Supabase URL and anon key from environment variables
+    const supabaseUrl = import.meta.env.VITE_SUPABASE_URL || 'https://ukedswaxpldombgjilvl.supabase.co';
+    const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVrZWRzd2F4cGxkb21iZ2ppbHZsIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDEyNjk5OTksImV4cCI6MjA1Njg0NTk5OX0.J1S8icZKmQwYQkcVOFYqTJSP7x0n0mGV-GIdJJVZwXY';
+    
+    const supabase = createClient(supabaseUrl, supabaseAnonKey);
+    
+    // Prepare data for analysis
+    const questionsWithAnswers = questions.map((q, index) => ({
+      question: q.question,
+      correctAnswer: q.answer,
+      userAnswer: userAnswers[index] || "",
+      isCorrect: (userAnswers[index] || "").trim().toLowerCase() === q.answer.trim().toLowerCase()
+    }));
+    
+    // Call the edge function to analyze results
+    const { data, error } = await supabase.functions.invoke('analyze-test-results', {
+      body: { topic, questionsWithAnswers }
+    });
+    
+    if (error) {
+      console.error("Edge function error:", error);
+      throw new Error(error.message || "Failed to get analysis from edge function");
+    }
+    
+    return data;
+  } catch (error) {
+    console.error("Error analyzing test results:", error);
+    
+    // Calculate basic score and accuracy as fallback
+    let correctCount = 0;
+    questions.forEach((_, index) => {
+      if (userAnswers[index] && userAnswers[index].trim().toLowerCase() === questions[index].answer.trim().toLowerCase()) {
+        correctCount++;
+      }
+    });
+    
+    const score = correctCount;
+    const accuracy = Math.round((correctCount / questions.length) * 100);
+    
+    // Provide generic feedback as fallback
+    return {
+      score,
+      accuracy,
+      weakAreas: "Unable to analyze specific weak areas due to an error.",
+      strengths: "Unable to analyze specific strengths due to an error."
+    };
+  }
 };
 
 // Simulated response function (kept from original implementation for fallback)
 const simulateQuestions = (
   topic: string,
-  difficulty: "Easy" | "Medium" | "Hard",
+  difficulty: string,
   count: number
 ): Promise<QuestionResponse[]> => {
   return new Promise((resolve) => {
@@ -99,19 +192,37 @@ const simulateQuestions = (
             questions.push({
               question: `Solve for x: ${Math.floor(Math.random() * 10)}x + ${Math.floor(Math.random() * 10)} = ${Math.floor(Math.random() * 30)}`,
               answer: `${Math.floor(Math.random() * 10)}`,
-              explanation: `Step 1: Move the constant to the right side\nStep 2: Divide both sides by the coefficient of x`
+              explanation: `Step 1: Move the constant to the right side\nStep 2: Divide both sides by the coefficient of x`,
+              options: [
+                `${Math.floor(Math.random() * 10)}`,
+                `${Math.floor(Math.random() * 10)}`,
+                `${Math.floor(Math.random() * 10)}`,
+                `${Math.floor(Math.random() * 10)}`
+              ]
             });
           } else if (difficulty === "Medium") {
             questions.push({
               question: `Solve the quadratic equation: ${Math.floor(Math.random() * 5) + 1}x² + ${Math.floor(Math.random() * 10)}x + ${Math.floor(Math.random() * 10)} = 0`,
               answer: `x = ${Math.floor(Math.random() * 5) - 2}, ${Math.floor(Math.random() * 5) - 2}`,
-              explanation: `Use the quadratic formula x = (-b ± √(b² - 4ac)) / 2a\nSubstitute the values and solve`
+              explanation: `Use the quadratic formula x = (-b ± √(b² - 4ac)) / 2a\nSubstitute the values and solve`,
+              options: [
+                `x = ${Math.floor(Math.random() * 5) - 2}, ${Math.floor(Math.random() * 5) - 2}`,
+                `x = ${Math.floor(Math.random() * 5) - 2}`,
+                `x = ${Math.floor(Math.random() * 5) - 2}, ${Math.floor(Math.random() * 5) - 2}`,
+                `x = ${Math.floor(Math.random() * 5) - 2}`
+              ]
             });
           } else {
             questions.push({
               question: `Find all values of x that satisfy: |${Math.floor(Math.random() * 5) + 1}x - ${Math.floor(Math.random() * 10)}| > ${Math.floor(Math.random() * 15)}`,
               answer: `x < ${Math.floor(Math.random() * 5) - 10} or x > ${Math.floor(Math.random() * 10) + 5}`,
-              explanation: `Step 1: Set up the two cases based on the absolute value\nStep 2: Solve each inequality`
+              explanation: `Step 1: Set up the two cases based on the absolute value\nStep 2: Solve each inequality`,
+              options: [
+                `x < ${Math.floor(Math.random() * 5) - 10} or x > ${Math.floor(Math.random() * 10) + 5}`,
+                `x > ${Math.floor(Math.random() * 5) - 10}`,
+                `x < ${Math.floor(Math.random() * 10) + 5}`,
+                `x = ${Math.floor(Math.random() * 5) - 10}`
+              ]
             });
           }
         } else if (topic === "Geometry") {
@@ -159,7 +270,13 @@ const simulateQuestions = (
           questions.push({
             question: `Question ${i + 1} for ${topic} (${difficulty} difficulty)`,
             answer: `Answer for question ${i + 1}`,
-            explanation: `This is a detailed explanation for question ${i + 1} in the ${topic} category.`
+            explanation: `This is a detailed explanation for question ${i + 1} in the ${topic} category.`,
+            options: [
+              `Answer for question ${i + 1}`,
+              `Wrong answer 1`,
+              `Wrong answer 2`,
+              `Wrong answer 3`
+            ]
           });
         }
       }
