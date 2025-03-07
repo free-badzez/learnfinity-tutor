@@ -132,6 +132,27 @@ const AITutor = () => {
     return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
   };
 
+  // Function to format the message content with proper spacing and structure
+  const formatMessageContent = (content: string) => {
+    // Handle bold text (convert **text** to strong elements)
+    let formattedContent = content.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+    
+    // Add spacing between paragraphs (empty lines become paragraph breaks)
+    formattedContent = formattedContent.replace(/\n\s*\n/g, '</p><p class="mt-4">');
+    
+    // Convert single line breaks within paragraphs to <br/> tags
+    formattedContent = formattedContent.replace(/\n(?!\n)/g, '<br/>');
+    
+    // Add spacing between numbered steps
+    formattedContent = formattedContent.replace(/(\d+\.\s)/g, '<span class="inline-block mt-2">$1</span>');
+    
+    // Add extra spacing before headers or section titles
+    formattedContent = formattedContent.replace(/(\*\*Method \d+:.*?\*\*)/g, '<strong class="block mt-4 mb-2 text-tutor-blue">$1</strong>');
+    
+    // Wrap the entire content in a paragraph tag
+    return `<p>${formattedContent}</p>`;
+  };
+
   return (
     <div className={`min-h-screen pt-16 bg-gray-50 ${expandedView ? 'overflow-hidden' : ''}`}>
       <div className="container mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -281,7 +302,14 @@ const AITutor = () => {
                             : 'bg-gray-100 text-gray-800'
                         }`}
                       >
-                        <p className="text-sm">{message.content}</p>
+                        {message.role === 'assistant' ? (
+                          <div 
+                            className="text-sm space-y-2 math-response"
+                            dangerouslySetInnerHTML={{ __html: formatMessageContent(message.content) }} 
+                          />
+                        ) : (
+                          <p className="text-sm">{message.content}</p>
+                        )}
                         <p className={`text-xs mt-1 ${message.role === 'user' ? 'text-blue-100' : 'text-gray-500'}`}>
                           {formatTime(message.timestamp)}
                         </p>
