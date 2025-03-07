@@ -4,7 +4,7 @@ project_id = "ahaupfnvqfhchptxbddl"
 [api]
 enabled = true
 port = 54321
-types = "../../types.ts"
+# Remove the invalid 'types' key
 
 [db]
 port = 54322
@@ -27,5 +27,6 @@ site_url = "http://localhost:3000"
 [storage]
 enabled = true
 
-[edge_functions]
+# Renamed from 'edge_functions' to 'functions' which is the correct key
+[functions]
 enabled = true
