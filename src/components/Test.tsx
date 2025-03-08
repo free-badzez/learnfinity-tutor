@@ -28,14 +28,14 @@ const Test = () => {
   const [analysis, setAnalysis] = useState(null);
   const [showResults, setShowResults] = useState(false);
 
-  // Set time based on difficulty
+  // Set time and question count based on difficulty
   useEffect(() => {
     if (difficulty === 'Easy') {
-      setTimeLeft(20 * 60); // 20 minutes in seconds
+      setTimeLeft(10 * 60); // 10 minutes in seconds
     } else if (difficulty === 'Medium') {
       setTimeLeft(15 * 60); // 15 minutes
     } else {
-      setTimeLeft(10 * 60); // 10 minutes
+      setTimeLeft(15 * 60); // 15 minutes for Hard
     }
   }, [difficulty]);
 
@@ -74,7 +74,15 @@ const Test = () => {
       return;
     }
 
-    const questionCount = difficulty === 'Easy' ? 10 : 5;
+    // Set question count based on difficulty
+    let questionCount;
+    if (difficulty === 'Easy') {
+      questionCount = 20; // 20 questions for Easy
+    } else if (difficulty === 'Medium') {
+      questionCount = 15; // 15 questions for Medium
+    } else {
+      questionCount = 10; // 10 questions for Hard
+    }
     
     const fetchQuestions = async () => {
       try {
@@ -319,7 +327,7 @@ const Test = () => {
         <div className="mb-4">
           <h1 className="text-2xl font-bold">{topic} - {difficulty} Level</h1>
           <p className="text-gray-600">
-            {questions.length} questions • {difficulty === 'Easy' ? '20 minutes' : difficulty === 'Medium' ? '15 minutes' : '10 minutes'}
+            {questions.length} questions • {difficulty === 'Easy' ? '10 minutes' : '15 minutes'}
           </p>
         </div>
         

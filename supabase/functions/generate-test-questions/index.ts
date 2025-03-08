@@ -26,16 +26,26 @@ serve(async (req) => {
     // Create a system prompt for generating math test questions
     const systemPrompt = `You are an expert math teacher creating multiple-choice questions for a ${difficulty} level test on ${topic}. 
     Generate ${count} questions with the following format for each question:
-    1. A clear, concise question that tests understanding of ${topic}
-    2. Four possible answers (a, b, c, d) with one correct answer
-    3. The correct answer as a single letter (a, b, c, or d)
-    4. A detailed explanation of why the answer is correct and how to solve the problem
+
+    1. Create a diverse mix of questions, with the following distribution:
+       - 70% should be standard text-based questions
+       - 30% should be figure-based questions (with detailed descriptions of figures like graphs, geometric shapes, or diagrams that can be visualized by the student)
+       
+    2. For each question, provide:
+       - A clear, concise question that tests understanding of ${topic}
+       - Four possible answers (a, b, c, d) with one correct answer
+       - The correct answer as a single letter (a, b, c, or d)
+       - A detailed explanation of why the answer is correct and how to solve the problem
+
+    3. Make sure the questions cover a variety of subtopics within ${topic} and test different skills and concepts.
+    
+    4. For figure-based questions, include a detailed text description of the figure in the question.
 
     Format your response as valid JSON with this structure:
     {
       "questions": [
         {
-          "question": "The full question text",
+          "question": "The full question text including any figure descriptions",
           "options": ["Option A", "Option B", "Option C", "Option D"],
           "answer": "a",
           "explanation": "Detailed explanation with step-by-step solution"
