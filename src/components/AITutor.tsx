@@ -1,3 +1,4 @@
+
 import React, { useState, useRef, useEffect } from 'react';
 import { Brain, Send, Lightbulb, Calculator, ArrowRight, Sigma, BookOpen, RefreshCw, Maximize2, Minimize2, PlusCircle, X, MessageSquare, Key } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -7,21 +8,18 @@ import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { askGemini, setGeminiApiKey, getGeminiApiKey, hasGeminiApiKey } from '@/services/geminiService';
+import { useGemini } from '@/contexts/GeminiContext';
 
 const AITutor = () => {
   const [userInput, setUserInput] = useState("");
-  const [conversation, setConversation] = useState<Array<{ role: string; content: string; timestamp: Date }>>([
-    {
-      role: "assistant",
-      content: "Hello! I'm your personal mathematics tutor. How can I help you today? You can ask me to solve problems, explain concepts, or guide you through math topics.",
-      timestamp: new Date()
-    }
-  ]);
   const [isTyping, setIsTyping] = useState(false);
   const [expandedView, setExpandedView] = useState(false);
   const [isError, setIsError] = useState(false);
+  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
+  const [localApiKey, setLocalApiKey] = useState("");
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const { toast } = useToast();
+  const { conversation, setConversation, hasApiKey, setApiKey } = useGemini();
   
   // Sample suggested questions
   const suggestedQuestions = [
@@ -44,15 +42,15 @@ const AITutor = () => {
 
   useEffect(() => {
     // Check if API key is already stored
-    if (!hasGeminiApiKey()) {
-      // setShowApiKeyInput(true);
+    if (!hasApiKey) {
+      setShowApiKeyInput(true);
       toast({
         title: "API Key Required",
         description: "Please enter your Gemini API key to use the AI tutor.",
         variant: "destructive",
       });
     }
-  }, []);
+  }, [hasApiKey, toast]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -60,6 +58,21 @@ const AITutor = () => {
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setUserInput(e.target.value);
+  };
+
+  const handleApiKeyChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setLocalApiKey(e.target.value);
+  };
+
+  const saveApiKey = () => {
+    if (localApiKey.trim() === "") return;
+    
+    setApiKey(localApiKey.trim());
+    setShowApiKeyInput(false);
+    toast({
+      title: "API Key Saved",
+      description: "Your Gemini API key has been saved.",
+    });
   };
 
   const handleSendMessage = async () => {
@@ -182,6 +195,32 @@ const AITutor = () => {
             </Button>
           </div>
         </div>
+
+        {showApiKeyInput && (
+          <Card className="bg-white shadow-soft mb-6">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center">
+                <Key className="h-5 w-5 mr-2 text-tutor-blue" />
+                API Key Required
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-4">
+              <p className="text-sm text-gray-600">
+                Please enter your Gemini API key to use the AI tutor features.
+              </p>
+              <div className="flex space-x-2">
+                <Input
+                  type="password"
+                  value={localApiKey}
+                  onChange={handleApiKeyChange}
+                  placeholder="Enter your Gemini API key..."
+                  className="flex-1"
+                />
+                <Button onClick={saveApiKey}>Save Key</Button>
+              </div>
+            </CardContent>
+          </Card>
+        )}
 
         <div className={`grid ${expandedView ? 'grid-cols-1' : 'grid-cols-1 lg:grid-cols-4'} gap-8`}>
           {/* Sidebar - only shown in compact view */}

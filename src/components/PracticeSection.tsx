@@ -1,5 +1,5 @@
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { BookOpen, Brain, MessageSquare, Calculator, ChevronRight, Lightbulb, Clock, ListChecks, ArrowRight, Check } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -10,13 +10,19 @@ import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import ChapterMenu from './ChapterMenu';
 import { hasGeminiApiKey, setGeminiApiKey } from '@/services/geminiService';
+import { useGemini } from '@/contexts/GeminiContext';
 
 const PracticeSection = () => {
   const navigate = useNavigate();
   const [selectedTopic, setSelectedTopic] = useState("");
   const [selectedDifficulty, setSelectedDifficulty] = useState("");
-  const [geminiApiKey, setGeminiKeyState] = useState("");
-  const [showApiKeyInput, setShowApiKeyInput] = useState(!hasGeminiApiKey());
+  const [localApiKey, setLocalApiKey] = useState("");
+  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
+  const { hasApiKey, setApiKey } = useGemini();
+
+  useEffect(() => {
+    setShowApiKeyInput(!hasApiKey);
+  }, [hasApiKey]);
 
   // Topic categories for sidebar
   const topics = [
@@ -36,7 +42,7 @@ const PracticeSection = () => {
       return;
     }
     
-    if (!hasGeminiApiKey()) {
+    if (!hasApiKey) {
       toast({
         title: "API Key Required",
         description: "Please enter a Gemini API key to generate questions.",
@@ -50,7 +56,7 @@ const PracticeSection = () => {
   };
 
   const saveApiKey = () => {
-    if (!geminiApiKey.trim()) {
+    if (!localApiKey.trim()) {
       toast({
         title: "Invalid API Key",
         description: "Please enter a valid Gemini API key.",
@@ -59,7 +65,7 @@ const PracticeSection = () => {
       return;
     }
     
-    setGeminiApiKey(geminiApiKey.trim());
+    setApiKey(localApiKey.trim());
     setShowApiKeyInput(false);
     toast({
       title: "API Key Saved",
@@ -178,8 +184,8 @@ const PracticeSection = () => {
                       <Input
                         type="password"
                         placeholder="Enter your Gemini API key"
-                        value={geminiApiKey}
-                        onChange={(e) => setGeminiKeyState(e.target.value)}
+                        value={localApiKey}
+                        onChange={(e) => setLocalApiKey(e.target.value)}
                         className="flex-1"
                       />
                       <Button onClick={saveApiKey}>Save</Button>
