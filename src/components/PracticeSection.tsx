@@ -165,9 +165,9 @@ const PracticeSection = () => {
                       >
                         <span className="font-medium">{difficulty}</span>
                         <span className="text-xs mt-1">
-                          {difficulty === "Easy" ? "10 questions, 20 min" : 
-                           difficulty === "Medium" ? "5 questions, 15 min" : 
-                           "5 questions, 10 min"}
+                          {difficulty === "Easy" ? "20 questions, 10 min" : 
+                           difficulty === "Medium" ? "15 questions, 15 min" : 
+                           "10 questions, 15 min"}
                         </span>
                       </div>
                     ))}
