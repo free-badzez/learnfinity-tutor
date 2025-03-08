@@ -1,4 +1,3 @@
-
 import React, { useState, useRef, useEffect } from 'react';
 import { Brain, Send, Lightbulb, Calculator, ArrowRight, Sigma, BookOpen, RefreshCw, Maximize2, Minimize2, PlusCircle, X, MessageSquare, Key } from 'lucide-react';
 import { Button } from "@/components/ui/button";
@@ -41,16 +40,11 @@ const AITutor = () => {
   }, [conversation]);
 
   useEffect(() => {
-    // Check if API key is already stored
+    // Check if API key is already stored but don't show toast
     if (!hasApiKey) {
       setShowApiKeyInput(true);
-      toast({
-        title: "API Key Required",
-        description: "Please enter your Gemini API key to use the AI tutor.",
-        variant: "destructive",
-      });
     }
-  }, [hasApiKey, toast]);
+  }, [hasApiKey]);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
