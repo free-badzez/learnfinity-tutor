@@ -6,23 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Separator } from "@/components/ui/separator";
-import { Input } from "@/components/ui/input";
 import { toast } from "@/hooks/use-toast";
 import ChapterMenu from './ChapterMenu';
-import { hasGeminiApiKey, setGeminiApiKey } from '@/services/geminiService';
 import { useGemini } from '@/contexts/GeminiContext';
 
 const PracticeSection = () => {
   const navigate = useNavigate();
   const [selectedTopic, setSelectedTopic] = useState("");
   const [selectedDifficulty, setSelectedDifficulty] = useState("");
-  const [localApiKey, setLocalApiKey] = useState("");
-  const [showApiKeyInput, setShowApiKeyInput] = useState(false);
-  const { hasApiKey, setApiKey } = useGemini();
-
-  useEffect(() => {
-    setShowApiKeyInput(!hasApiKey);
-  }, [hasApiKey]);
+  const { hasApiKey } = useGemini();
 
   // Topic categories for sidebar
   const topics = [
@@ -42,35 +34,7 @@ const PracticeSection = () => {
       return;
     }
     
-    if (!hasApiKey) {
-      toast({
-        title: "API Key Required",
-        description: "Please enter a Gemini API key to generate questions.",
-        variant: "destructive"
-      });
-      setShowApiKeyInput(true);
-      return;
-    }
-    
     navigate('/test', { state: { topic: selectedTopic, difficulty: selectedDifficulty } });
-  };
-
-  const saveApiKey = () => {
-    if (!localApiKey.trim()) {
-      toast({
-        title: "Invalid API Key",
-        description: "Please enter a valid Gemini API key.",
-        variant: "destructive"
-      });
-      return;
-    }
-    
-    setApiKey(localApiKey.trim());
-    setShowApiKeyInput(false);
-    toast({
-      title: "API Key Saved",
-      description: "Your Gemini API key has been saved for this session.",
-    });
   };
 
   return (
@@ -173,25 +137,6 @@ const PracticeSection = () => {
                     ))}
                   </div>
                 </div>
-
-                {showApiKeyInput && (
-                  <div className="mb-6 p-4 border rounded-lg bg-gray-50">
-                    <h3 className="text-md font-medium mb-3">Gemini API Key</h3>
-                    <p className="text-sm text-gray-600 mb-3">
-                      Enter your Gemini API key to generate AI-powered practice questions.
-                    </p>
-                    <div className="flex items-center gap-2">
-                      <Input
-                        type="password"
-                        placeholder="Enter your Gemini API key"
-                        value={localApiKey}
-                        onChange={(e) => setLocalApiKey(e.target.value)}
-                        className="flex-1"
-                      />
-                      <Button onClick={saveApiKey}>Save</Button>
-                    </div>
-                  </div>
-                )}
 
                 <div className="mt-6">
                   <Button 

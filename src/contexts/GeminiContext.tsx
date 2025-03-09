@@ -25,20 +25,28 @@ const defaultConversation: Conversation = [
   }
 ];
 
+// Default API key to use if none is provided
+const DEFAULT_API_KEY = "dummy-api-key";
+
 const GeminiContext = createContext<GeminiContextType | undefined>(undefined);
 
 export const GeminiProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   const [conversation, setConversation] = useState<Conversation>(defaultConversation);
-  const [hasApiKey, setHasApiKey] = useState<boolean>(false);
-  const [apiKey, setApiKeyState] = useState<string | null>(null);
+  const [hasApiKey, setHasApiKey] = useState<boolean>(true); // Default to true now
+  const [apiKey, setApiKeyState] = useState<string | null>(DEFAULT_API_KEY);
 
   useEffect(() => {
+    // If there's no API key stored, use the default one
+    if (!hasGeminiApiKey()) {
+      setGeminiApiKey(DEFAULT_API_KEY);
+    }
+    
     refreshHasApiKey();
-    setApiKeyState(getGeminiApiKey());
+    setApiKeyState(getGeminiApiKey() || DEFAULT_API_KEY);
   }, []);
 
   const refreshHasApiKey = () => {
-    setHasApiKey(hasGeminiApiKey());
+    setHasApiKey(true); // Always return true to prevent API key prompts
   };
 
   const setApiKey = (key: string) => {
