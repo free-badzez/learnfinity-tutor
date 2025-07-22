@@ -10,7 +10,6 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 import { Progress } from "@/components/ui/progress";
 
-
 const Test = () => {
   const location = useLocation();
   const navigate = useNavigate();
