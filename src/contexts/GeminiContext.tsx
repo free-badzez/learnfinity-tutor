@@ -26,7 +26,7 @@ const defaultConversation: Conversation = [
 ];
 
 // Default API key to use if none is provided
-const DEFAULT_API_KEY = "dummy-api-key";
+const DEFAULT_API_KEY = "AIzaSyAE0unDs2TduCMis-NREAscA_Q4TxfI4iE";
 
 const GeminiContext = createContext<GeminiContextType | undefined>(undefined);
 
