@@ -6,7 +6,6 @@
 
 Learnfinity Tutor is an educational tutoring platform (backend + frontend scaffold) designed to help learners connect with tutors, manage lessons, and track progress. This repository contains the core application code, tooling, and documentation to run, develop, and extend the platform.
 
-> NOTE: This README is scaffolded to be flexible. Replace placeholder commands, environment keys, and tooling notes with the exact details used in this repository.
 
 Table of contents
 - About
